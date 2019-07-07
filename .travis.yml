@@ -1,9 +1,11 @@
 language: go
+jdk: openjdk8
 
-notifications:
-  email:
-    on_success: never
-    on_failure: always
+android:
+  components:
+    - tools
+    - platform-tools
+    - tools
 
 matrix:
   include:
@@ -12,12 +14,8 @@ matrix:
       sudo: true
       go: 1.12.x
       before_install:
-        - wget -O $ANDROID_HOME/android-ndk-r19b-linux-x86_64.zip https://dl.google.com/android/repository/android-ndk-r19b-linux-x86_64.zip
-        - unzip -qq $ANDROID_HOME/android-ndk-r19b-linux-x86_64.zip -d $ANDROID_HOME/android-ndk-r19b-linux-x86_64
-        - mv $ANDROID_HOME/android-ndk-r19b-linux-x86_64/android-ndk-r19b $ANDROID_HOME/ndk-bundle
-        - export ANDROID_NDK_HOME=$ANDROID_HOME/ndk-bundle
         - go get -u golang.org/x/mobile/cmd/gomobile
-        - echo $ANDROID_NDK_HOME
+        - go get -u golang.org/x/mobile/cmd/gobind
       script:
         - make build
         - make test
@@ -29,6 +27,7 @@ matrix:
       go: 1.12.x
       before_install:
         - go get -u golang.org/x/mobile/cmd/gomobile
+        - go get -u golang.org/x/mobile/cmd/gobind
       script:
         - make build
         - make test

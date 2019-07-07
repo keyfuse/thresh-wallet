@@ -9,12 +9,10 @@ build:
 
 buildandroid:
 	@echo "--> Building android library..."
-	gomobile init
 	gomobile bind -target=android library
 
 buildosx:
 	@echo "--> Building osx library..."
-	gomobile init
 	gomobile bind -target=ios library
 
 clean:
