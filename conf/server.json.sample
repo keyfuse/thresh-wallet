@@ -1,0 +1,8 @@
+{
+	"endpoint": ":9099",
+	"chainnet": "testnet",
+	"datadir": "your-wallet-datadir",
+	"token_secret": "your-token-secret"
+	"mainnet_apiurl":  "https://blockstream.info",
+	"testnet_apiurl":  "https://blockstream.info/testnet"
+}

@@ -1,0 +1,24 @@
+// thresh-wallet
+//
+// Copyright 2019 by KeyFuse
+//
+// GPLv3 License
+
+package client
+
+import (
+	"github.com/xandout/gorpl/action"
+)
+
+func dumpKeyAction(cli *Client) *action.Action {
+	return action.New("dumpkey", func(args ...interface{}) (interface{}, error) {
+		var rows [][]string
+		columns := []string{
+			"masterprvkey(local)",
+			"masterpubkey(local)",
+		}
+		rows = append(rows, []string{cli.masterPrvKey, cli.masterPubKey})
+		PrintQueryOutput(columns, rows)
+		return nil, nil
+	})
+}
