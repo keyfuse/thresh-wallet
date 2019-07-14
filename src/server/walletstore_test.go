@@ -20,9 +20,9 @@ func TestWalletStore(t *testing.T) {
 	defer leaktest.Check(t)()
 
 	wallet := NewWallet()
-	wallet.UID = "U001"
-	wallet.SvrMasterPrvKey = "tprv8ZgxMBicQKsPdZaiD1bZC55UcWpif1Nk9SD4iqjemtPFNRYcXMFRGiWGyGejLWJpXqXffi9zdiYkDqtgF3Gn2ShmbhQYGMsCm3Q8jGPFDLR"
-	wallet.CliMasterPubKey = "tpubD6NzVbkrYhZ4X7Cn1qGQ7XReumN4yFvgP3ms8dPtTiLD7wpP95cqmbaAkk5WSZaSrgpgtmPQhpNGmkxVRezP3WN486xEddsWHU22a6F7yJZ"
+	wallet.UID = mockUID
+	wallet.SvrMasterPrvKey = mockSvrMasterPrvKey
+	wallet.CliMasterPubKey = mockCliMasterPubKey
 
 	dir := "/tmp/tss"
 	os.RemoveAll(dir)
@@ -45,7 +45,7 @@ func TestWalletStore(t *testing.T) {
 
 	// Read.
 	{
-		path := "/tmp/tss/U001.json"
+		path := "/tmp/tss/10086.json"
 		got, err := wstore.Read(path)
 		assert.Nil(t, err)
 		assert.Equal(t, wallet, got)

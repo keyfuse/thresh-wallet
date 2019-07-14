@@ -26,14 +26,14 @@ type WalletSyncer struct {
 }
 
 // NewWalletSyncer -- creates new WalletSyncer.
-func NewWalletSyncer(log *xlog.Log, conf *Config, store *WalletStore) *WalletSyncer {
+func NewWalletSyncer(log *xlog.Log, conf *Config, chain Chain, store *WalletStore) *WalletSyncer {
 	return &WalletSyncer{
 		log:    log,
 		store:  store,
 		conf:   conf,
 		done:   make(chan bool),
-		chain:  NewChainProxy(log, conf),
-		ticker: time.NewTicker(time.Duration(time.Second * time.Duration(conf.WalletSyncIntervalSec))),
+		chain:  chain,
+		ticker: time.NewTicker(time.Duration(time.Millisecond * time.Duration(conf.WalletSyncIntervalMs))),
 	}
 }
 
@@ -64,7 +64,7 @@ func (ws *WalletSyncer) Sync() {
 	ws.mu.Lock()
 	defer ws.mu.Unlock()
 
-	uids := store.UIDs()
+	uids := store.AllUID()
 	for _, uid := range uids {
 		wallet := store.Get(uid)
 		if wallet != nil {
@@ -75,7 +75,7 @@ func (ws *WalletSyncer) Sync() {
 					log.Error("walletsyncer.address[%v].get.utxo.error:%v", addr, err)
 					continue
 				}
-				wallet.UpdateAddressUnspent(addr, unspents)
+				wallet.UpdateUnspents(addr, unspents)
 			}
 			if err := store.Write(wallet); err != nil {
 				log.Error("walletsyncer.wallet[%v].store.write.error:%v", wallet.UID, err)

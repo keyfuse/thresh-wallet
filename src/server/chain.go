@@ -18,6 +18,7 @@ const (
 // Chain --
 type Chain interface {
 	GetUTXO(address string) ([]Unspent, error)
+	PushTx(hex string) (string, error)
 }
 
 // NewChainProxy -- creates new Chain, default provider is blockstream.info.

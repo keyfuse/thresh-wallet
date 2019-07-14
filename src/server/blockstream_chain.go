@@ -94,7 +94,6 @@ func (c *BlockstreamChain) GetUTXO(address string) ([]Unspent, error) {
 	log := c.log
 
 	path := fmt.Sprintf("%s/address/%s/utxo", c.url, address)
-	log.Info("chain.blockstream.strart.getutxo:[%v]", path)
 
 	httpRsp, err := proto.NewRequest().Get(path)
 	if err != nil {
@@ -138,6 +137,25 @@ func (c *BlockstreamChain) GetUTXO(address string) ([]Unspent, error) {
 		unspents = append(unspents, unspent)
 	}
 
-	log.Info("chain.blockstream.end.getutxo[%+v].time:%v", unspents, httpRsp.Cost())
 	return unspents, nil
+}
+
+// PushTx -- used to push tx to the chain.
+func (c *BlockstreamChain) PushTx(hex string) (string, error) {
+	log := c.log
+
+	path := fmt.Sprintf("%s/tx", c.url)
+	log.Info("chain.blockstream.strart.pushtx:[%v].tx:%v", path, hex)
+
+	httpRsp, err := proto.NewRequest().Post(path, hex)
+	if err != nil {
+		return "", err
+	}
+	if httpRsp.StatusCode() != 200 {
+		return "", fmt.Errorf("blockstream.push.tx.rsp.error:%v", httpRsp.StatusCode())
+	}
+	txid := httpRsp.Body()
+
+	log.Info("chain.blockstream.end.pushtx.txid:%v", txid)
+	return txid, nil
 }

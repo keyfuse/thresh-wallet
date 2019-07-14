@@ -8,6 +8,8 @@ package server
 
 import (
 	"fmt"
+	"sort"
+	"sync"
 
 	"xlog"
 
@@ -17,9 +19,11 @@ import (
 
 // WalletDB --
 type WalletDB struct {
+	mu     sync.Mutex
 	log    *xlog.Log
 	conf   *Config
 	net    *network.Network
+	chain  Chain
 	store  *WalletStore
 	syncer *WalletSyncer
 }
@@ -34,46 +38,68 @@ func NewWalletDB(log *xlog.Log, conf *Config) *WalletDB {
 		net = network.MainNet
 	}
 
+	chain := NewChainProxy(log, conf)
 	store := NewWalletStore(log, conf)
-	syncer := NewWalletSyncer(log, conf, store)
+	syncer := NewWalletSyncer(log, conf, chain, store)
 	return &WalletDB{
 		log:    log,
 		net:    net,
 		conf:   conf,
+		chain:  chain,
 		store:  store,
 		syncer: syncer,
 	}
+}
+
+func (wdb *WalletDB) setChain(chain Chain) {
+	wdb.mu.Lock()
+	defer wdb.mu.Unlock()
+
+	log := wdb.log
+	conf := wdb.conf
+	store := wdb.store
+
+	syncer := wdb.syncer
+	syncer.Stop()
+
+	// Set new syncer.
+	newsyncer := NewWalletSyncer(log, conf, chain, store)
+	wdb.syncer = newsyncer
+	newsyncer.Start()
+	wdb.chain = chain
+}
+
+// Open -- used to load all the wallets who in the disk to the cache.
+func (wdb *WalletDB) Open(dir string) error {
+	wdb.mu.Lock()
+	defer wdb.mu.Unlock()
+
+	if err := wdb.store.Open(dir); err != nil {
+		return err
+	}
+	wdb.syncer.Start()
+	return nil
+}
+
+// Close -- used to close the db.
+func (wdb *WalletDB) Close() {
+	wdb.mu.Lock()
+	defer wdb.mu.Unlock()
+	wdb.syncer.Stop()
 }
 
 func (wdb *WalletDB) check(uid string, walletMasterPubKey string, cliMasterPubKey string) error {
 	log := wdb.log
 
 	if walletMasterPubKey != cliMasterPubKey {
-		log.Error("wdb.openwallet[%v].check.wallet.invalid.req.climasterpubkey:%v", uid, cliMasterPubKey)
+		log.Error("wdb.openwallet[%v].check.wallet.invalid.req.climasterpubkey:%v, svr.climasterpubkey:%v", uid, cliMasterPubKey, walletMasterPubKey)
 		return fmt.Errorf("wdb.uid[%v].req.masterpubkey[%v].invalid", uid, cliMasterPubKey)
 	}
 	return nil
 }
 
-// Open -- used to load all the wallets who in the disk to the cache.
-func (wdb *WalletDB) Open(dir string) error {
-	store := wdb.store
-	syncer := wdb.syncer
-
-	if err := store.Open(dir); err != nil {
-		return err
-	}
-	syncer.Start()
-	return nil
-}
-
-// Close -- used to close the db.
-func (wdb *WalletDB) Close() {
-	wdb.syncer.Stop()
-}
-
-// OpenWalletByUID -- used to open(or create if not exists) a wallet file.
-func (wdb *WalletDB) OpenWalletByUID(uid string, cliMasterPubKey string) (*Wallet, error) {
+// OpenUIDWallet -- used to open(or create if not exists) a wallet file.
+func (wdb *WalletDB) OpenUIDWallet(uid string, cliMasterPubKey string) (*Wallet, error) {
 	net := wdb.net
 	store := wdb.store
 
@@ -100,8 +126,8 @@ func (wdb *WalletDB) OpenWalletByUID(uid string, cliMasterPubKey string) (*Walle
 	return wallet, nil
 }
 
-// NewAddressByUID -- used to generate new address of this uid.
-func (wdb *WalletDB) NewAddressByUID(uid string, cliMasterPubKey string) (*Address, error) {
+// NewAddress -- used to generate new address of this uid.
+func (wdb *WalletDB) NewAddress(uid string, cliMasterPubKey string) (*Address, error) {
 	net := wdb.net
 	store := wdb.store
 
@@ -138,6 +164,22 @@ func (wdb *WalletDB) NewAddressByUID(uid string, cliMasterPubKey string) (*Addre
 	return address, nil
 }
 
+func (wdb *WalletDB) MasterPrvKey(uid string, cliMasterPubKey string) (string, error) {
+	store := wdb.store
+
+	// Get wallet.
+	wallet := store.Get(uid)
+	if wallet == nil {
+		return "", fmt.Errorf("wdb.master.prvkey.uid[%v].cant.found", uid)
+	}
+
+	// Check.
+	if err := wdb.check(uid, wallet.CliMasterPubKey, cliMasterPubKey); err != nil {
+		return "", err
+	}
+	return wallet.SvrMasterPrvKey, nil
+}
+
 // Balance --used to return balance of the wallet.
 func (wdb *WalletDB) Balance(uid string) (*Balance, error) {
 	store := wdb.store
@@ -155,4 +197,61 @@ func (wdb *WalletDB) Balance(uid string) (*Balance, error) {
 		balance.UnconfirmedBalance += addr.Balance.UnconfirmedBalance
 	}
 	return balance, nil
+}
+
+// UnspentsByAmount -- used to return unspent which all the value upper than the amount.
+func (wdb *WalletDB) Unspents(uid string, amount uint64) ([]UTXO, error) {
+	var rsp []UTXO
+	var utxos []UTXO
+	var thresh uint64
+	var balance uint64
+
+	net := wdb.net
+	store := wdb.store
+
+	// Get wallet.
+	wallet := store.Get(uid)
+	if wallet == nil {
+		return nil, fmt.Errorf("wdb.unspentsbyamount[%v].cant.found", uid)
+	}
+	wallet.Lock()
+	defer wallet.Unlock()
+
+	for _, addr := range wallet.Address {
+		for _, unspent := range addr.Unspents {
+			svrpubkey, err := createSvrChildPubKey(addr.Pos, wallet.SvrMasterPrvKey, net)
+			if err != nil {
+				return nil, err
+			}
+			utxos = append(utxos, UTXO{
+				Pos:          addr.Pos,
+				Txid:         unspent.Txid,
+				Vout:         unspent.Vout,
+				Value:        unspent.Value,
+				Address:      addr.Address,
+				Confirmed:    unspent.Confirmed,
+				SvrPubKey:    svrpubkey,
+				Scriptpubkey: unspent.Scriptpubkey,
+			})
+		}
+		balance += addr.Balance.AllBalance
+	}
+
+	// Check.
+	if balance <= amount {
+		return nil, fmt.Errorf("wdb.unpsentsbyamount[%v].suffient.req.amount[%v].allbalance[%v]", uid, amount, balance)
+	}
+
+	// Sort by value desc.
+	sort.Slice(utxos, func(i, j int) bool { return utxos[i].Value > utxos[j].Value })
+
+	// Patch.
+	for _, utxo := range utxos {
+		thresh += utxo.Value
+		rsp = append(rsp, utxo)
+		if thresh > amount {
+			break
+		}
+	}
+	return rsp, nil
 }

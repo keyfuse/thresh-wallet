@@ -33,7 +33,6 @@ type EcdsaR2Request struct {
 
 // EcdsaR2Response --
 type EcdsaR2Response struct {
-	Pos    uint32            `json:"pos"`
 	R2     *secp256k1.Scalar `json:"R2"`
 	ShareR *secp256k1.Scalar `json:"shareR"`
 }
@@ -50,6 +49,5 @@ type EcdsaS2Request struct {
 
 // EcdsaS2Response --
 type EcdsaS2Response struct {
-	Pos uint32   `json:"pos"`
-	S2  *big.Int `json:"S2"`
+	S2 *big.Int `json:"S2"`
 }

@@ -10,6 +10,18 @@ import (
 	"sync"
 )
 
+// UTXO --
+type UTXO struct {
+	Pos          uint32 `json:"pos"`
+	Txid         string `json:"txid"`
+	Vout         uint32 `json:"vout"`
+	Value        uint64 `json:"value"`
+	Address      string `json:"address"`
+	Confirmed    bool   `json:"confirmed"`
+	SvrPubKey    string `json:"svrpubkey"`
+	Scriptpubkey string `json:"Scriptpubkey"`
+}
+
 // Balance --
 type Balance struct {
 	AllBalance         uint64 `json:"all_balance"`
@@ -84,8 +96,8 @@ func (w *Wallet) Addresses() []string {
 	return addrs
 }
 
-// UpdateAddressUnspent -- update the address balance/unspent which fetchs from the chain.
-func (w *Wallet) UpdateAddressUnspent(addr string, unspents []Unspent) {
+// UpdateUnspents -- update the address balance/unspent which fetchs from the chain.
+func (w *Wallet) UpdateUnspents(addr string, unspents []Unspent) {
 	w.mu.Lock()
 	address := w.Address[addr]
 	w.mu.Unlock()

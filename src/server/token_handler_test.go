@@ -21,7 +21,7 @@ func TestVCodeHandler(t *testing.T) {
 	// VCode.
 	{
 		req := &proto.VCodeRequest{
-			UID: "bohu",
+			UID: mockUID,
 		}
 		httpRsp, err := proto.NewRequest().Post(ts.URL+"/api/vcode", req)
 		assert.Nil(t, err)
@@ -36,12 +36,15 @@ func TestTokenHandler(t *testing.T) {
 	// OK.
 	{
 		req := &proto.TokenRequest{
-			UID:          "bohu",
-			MasterPubKey: "tpubD6NzVbkrYhZ4X7Cn1qGQ7XReumN4yFvgP3ms8dPtTiLD7wpP95cqmbaAkk5WSZaSrgpgtmPQhpNGmkxVRezP3WN486xEddsWHU22a6F7yJZ",
+			UID:          mockUID,
+			MasterPubKey: mockCliMasterPubKey,
 		}
 
 		httpRsp, err := proto.NewRequest().Post(ts.URL+"/api/token", req)
 		assert.Nil(t, err)
+		rsp := &proto.TokenResponse{}
+		httpRsp.Json(rsp)
+		t.Logf("rsp:%+v", rsp)
 		assert.Equal(t, 200, httpRsp.StatusCode())
 	}
 }

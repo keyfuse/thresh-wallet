@@ -39,6 +39,7 @@ func (s *WalletStore) Open(dir string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	log := s.log
 	s.dir = dir
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		if x := os.MkdirAll(dir, os.ModePerm); x != nil {
@@ -59,6 +60,7 @@ func (s *WalletStore) Open(dir string) error {
 			return err
 		}
 		s.wallets[wallet.UID] = wallet
+		log.Info("wallet.store.load[%v]", wallet.UID)
 	}
 	return nil
 }
@@ -126,8 +128,8 @@ func (s *WalletStore) Get(uid string) *Wallet {
 	return wallet
 }
 
-// UIDs -- used to clone all the wallet uids.
-func (s *WalletStore) UIDs() []string {
+// AllUID -- used to clone all the wallet uids.
+func (s *WalletStore) AllUID() []string {
 	var uids []string
 
 	s.mu.Lock()

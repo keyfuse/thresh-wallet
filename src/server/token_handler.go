@@ -76,7 +76,7 @@ func (h *Handler) tokenfn(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Check wallet.
-	_, err = wdb.OpenWalletByUID(req.UID, req.MasterPubKey)
+	_, err = wdb.OpenUIDWallet(req.UID, req.MasterPubKey)
 	if err != nil {
 		log.Error("api.token.open.wallet.error:%+v", err)
 		resp.writeError(err)

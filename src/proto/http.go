@@ -126,11 +126,16 @@ func (r *Request) Post(url string, body interface{}) (*Response, error) {
 	var data string
 
 	if body != nil {
-		d, err := json.Marshal(body)
-		if err != nil {
-			return nil, err
+		switch v := body.(type) {
+		case string:
+			data = v
+		default:
+			d, err := json.Marshal(body)
+			if err != nil {
+				return nil, err
+			}
+			data = string(d)
 		}
-		data = string(d)
 	}
 	return r.doRequest(http.MethodPost, url, data)
 }

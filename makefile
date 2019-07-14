@@ -7,13 +7,15 @@ build:
 	go build -v -o bin/threshwallet-client src/cmd/client.go
 	@chmod 755 bin/*
 
-buildandroid:
-	@echo "--> Building android library..."
-	gomobile bind -target=android library
-
 buildosx:
 	@echo "--> Building osx library..."
-	gomobile bind -target=ios library
+	go get -v golang.org/x/mobile/cmd/gomobile
+	./bin/gomobile bind -target=ios library
+
+buildandroid:
+	@echo "--> Building android library..."
+	go get -v golang.org/x/mobile/cmd/gomobile
+	./bin/gomobile bind -target=android library
 
 clean:
 	@echo "--> Cleaning..."

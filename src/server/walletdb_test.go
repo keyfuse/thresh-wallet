@@ -20,7 +20,6 @@ import (
 func TestWalletDB(t *testing.T) {
 	defer leaktest.Check(t)()
 
-	uid := "U002"
 	conf := MockConfig()
 	log := xlog.NewStdLog(xlog.Level(xlog.INFO))
 	wdb := NewWalletDB(log, conf)
@@ -37,16 +36,15 @@ func TestWalletDB(t *testing.T) {
 
 	// Get.
 	{
-		_, err := wdb.OpenWalletByUID(uid, mockCliMasterPubKey)
+		_, err := wdb.OpenUIDWallet(mockUID, mockCliMasterPubKey)
 		assert.Nil(t, err)
 	}
 
 	// New address.
 	{
 		for i := 0; i < 10; i++ {
-			addr, err := wdb.NewAddressByUID(uid, mockCliMasterPubKey)
+			_, err := wdb.NewAddress(mockUID, mockCliMasterPubKey)
 			assert.Nil(t, err)
-			t.Logf("addr:%+v", addr)
 		}
 	}
 
@@ -58,9 +56,8 @@ func TestWalletDB(t *testing.T) {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				addr, err := wdb.NewAddressByUID(uid, mockCliMasterPubKey)
+				_, err := wdb.NewAddress(mockUID, mockCliMasterPubKey)
 				assert.Nil(t, err)
-				t.Logf("addr:%+v", addr)
 			}()
 		}
 		wg.Wait()

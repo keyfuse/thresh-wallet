@@ -19,7 +19,6 @@ matrix:
       script:
         - make build
         - make test
-        - make buildandroid
 
     - os: osx
       osx_image: xcode10.1
@@ -31,7 +30,6 @@ matrix:
       script:
         - make build
         - make test
-        - make buildosx
 
 after_success:
   # send coverage reports to Codecov

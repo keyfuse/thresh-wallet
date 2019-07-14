@@ -97,5 +97,6 @@ func (cli *Client) Start() {
 	f.AddAction(*tokenAction(cli))
 	f.AddAction(*walletBalanceAction(cli))
 	f.AddAction(*walletNewAddressAction(cli))
+	f.AddAction(*walletSendToAddress(cli))
 	f.Start()
 }

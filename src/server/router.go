@@ -18,6 +18,7 @@ import (
 // APIMux --
 type APIMux struct {
 	*chi.Mux
+	handler *Handler
 }
 
 // NewAPIRouter -- create new apiMux.
@@ -44,10 +45,15 @@ func NewAPIRouter(log *xlog.Log, conf *Config) APIMux {
 		r.Use(jwtauth.Verifier(handler.tokenAuth))
 		r.Use(jwtauth.Authenticator)
 
-		r.Post("/api/ecdsa/newaddress", handler.ecdsaNewAddress)
+		// Wallet.
 		r.Post("/api/wallet/balance", handler.walletBalance)
-		//r.Post("/api/ecdsa/r2", handler.ecdsaR2)
-		//r.Post("/api/ecdsa/s2", handler.ecdsaS2)
+		r.Post("/api/wallet/unspent", handler.walletUnspent)
+		r.Post("/api/wallet/pushtx", handler.walletPushTx)
+
+		// ECDSA.
+		r.Post("/api/ecdsa/r2", handler.ecdsaR2)
+		r.Post("/api/ecdsa/s2", handler.ecdsaS2)
+		r.Post("/api/ecdsa/newaddress", handler.ecdsaNewAddress)
 	})
-	return APIMux{router}
+	return APIMux{router, handler}
 }

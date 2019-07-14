@@ -33,14 +33,14 @@ func TestWalletSyncer(t *testing.T) {
 
 	// Get.
 	{
-		_, err := wdb.OpenWalletByUID(uid, mockCliMasterPubKey)
+		_, err := wdb.OpenUIDWallet(uid, mockCliMasterPubKey)
 		assert.Nil(t, err)
 	}
 
 	// New address.
 	{
 		for i := 0; i < 3; i++ {
-			addr, err := wdb.NewAddressByUID(uid, mockCliMasterPubKey)
+			addr, err := wdb.NewAddress(uid, mockCliMasterPubKey)
 			assert.Nil(t, err)
 			t.Logf("addr:%+v", addr)
 		}
