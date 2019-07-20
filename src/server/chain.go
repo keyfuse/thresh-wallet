@@ -21,6 +21,7 @@ type Chain interface {
 	GetFees() (map[string]float32, error)
 	GetUTXO(address string) ([]Unspent, error)
 	GetTickers() (map[string]Ticker, error)
+	GetTxLink() string
 	PushTx(hex string) (string, error)
 }
 

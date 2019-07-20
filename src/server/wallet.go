@@ -35,6 +35,7 @@ type SendFees struct {
 type Tx struct {
 	Txid        string `json:"txid"`
 	Fee         int64  `json:"fee"`
+	Link        string `json:"link"`
 	Value       int64  `json:"value"`
 	Confirmed   bool   `json:"confirmed"`
 	BlockTime   int64  `json:"block_time"`

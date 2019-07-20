@@ -193,15 +193,23 @@ func (wdb *WalletDB) Unspents(uid string, amount uint64) ([]UTXO, error) {
 	return wallet.Unspents(amount)
 }
 
+// Txs -- used to returns tx list.
 func (wdb *WalletDB) Txs(uid string, offset int, limit int) ([]Tx, error) {
+	var ret []Tx
 	store := wdb.store
+	chain := wdb.chain
 
 	// Get wallet.
 	wallet := store.Get(uid)
 	if wallet == nil {
 		return nil, fmt.Errorf("wdb.txs.uid[%v].cant.found", uid)
 	}
-	return wallet.Txs(offset, limit), nil
+	txs := wallet.Txs(offset, limit)
+	for _, tx := range txs {
+		tx.Link = fmt.Sprintf(chain.GetTxLink(), tx.Txid)
+		ret = append(ret, tx)
+	}
+	return ret, nil
 }
 
 // SendFees -- returns the fee info for this send.

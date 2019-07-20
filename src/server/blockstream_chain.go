@@ -220,6 +220,20 @@ func (c *BlockstreamChain) GetTickers() (map[string]Ticker, error) {
 	return tickers, nil
 }
 
+// GetTxLink -- get the tx web link.
+func (c *BlockstreamChain) GetTxLink() string {
+	var url string
+	conf := c.conf
+
+	switch conf.ChainNet {
+	case testnet:
+		url = "https://blockstream.info/testnet/tx/%v"
+	case mainnet:
+		url = "https://blockstream.info/tx/%v"
+	}
+	return url
+}
+
 // PushTx -- used to push tx to the chain.
 func (c *BlockstreamChain) PushTx(hex string) (string, error) {
 	log := c.log

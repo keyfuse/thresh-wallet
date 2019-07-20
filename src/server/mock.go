@@ -116,7 +116,7 @@ func MockConfig() *Config {
 	conf := DefaultConfig()
 	conf.EnableVCode = false
 	conf.DataDir = "/tmp/tss"
-	conf.WalletSyncIntervalMs = 40
+	conf.WalletSyncIntervalMs = 30
 
 	return conf
 }
@@ -135,7 +135,7 @@ func MockServer() (*httptest.Server, func()) {
 	if err := router.Init(); err != nil {
 		panic(err)
 	}
-	time.Sleep(50 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 	ts := httptest.NewServer(router)
 	return ts, func() {
 		ts.Close()
@@ -216,6 +216,10 @@ func (c *mockChain) GetFees() (map[string]float32, error) {
 	fees["6"] = 0.6
 	fees["10"] = 0.1
 	return fees, nil
+}
+
+func (c *mockChain) GetTxLink() string {
+	return "https://blockstream.info/testnet/tx/%v"
 }
 
 func (c *mockChain) GetTickers() (map[string]Ticker, error) {

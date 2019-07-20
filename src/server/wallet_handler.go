@@ -137,6 +137,7 @@ func (h *Handler) walletTxs(w http.ResponseWriter, r *http.Request) {
 		rsp = append(rsp, proto.WalletTxsResponse{
 			Txid:        tx.Txid,
 			Fee:         tx.Fee,
+			Link:        tx.Link,
 			Value:       tx.Value,
 			Confirmed:   tx.Confirmed,
 			BlockTime:   tx.BlockTime,

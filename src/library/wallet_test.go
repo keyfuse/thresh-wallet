@@ -83,6 +83,7 @@ func TestWalletTxs(t *testing.T) {
 	rsp := &WalletTxsResponse{}
 	unmarshal(body, rsp)
 
+	t.Logf("%+v", rsp.Txs)
 	assert.Equal(t, 200, rsp.Code)
 	assert.Equal(t, 2, len(rsp.Txs))
 }
