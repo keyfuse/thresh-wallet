@@ -39,6 +39,26 @@ func NewWalletSyncer(log *xlog.Log, conf *Config, chain Chain, store *WalletStor
 
 // Start -- used to start the sync worker talk with chain.
 func (ws *WalletSyncer) Start() {
+	log := ws.log
+	store := ws.store
+	chain := ws.chain
+
+	// Update fees.
+	fees, err := chain.GetFees()
+	if err != nil {
+		log.Error("walletsyncer.get.fees.error:%v", err)
+	} else {
+		store.updateFees(fees)
+	}
+
+	// Update tickers.
+	tickers, err := chain.GetTickers()
+	if err != nil {
+		log.Error("walletsyncer.get.tickers.error:%v", err)
+	} else {
+		store.updateTickers(tickers)
+	}
+
 	ws.wg.Add(1)
 	go func(syncer *WalletSyncer) {
 		defer syncer.wg.Done()
@@ -64,18 +84,43 @@ func (ws *WalletSyncer) Sync() {
 	ws.mu.Lock()
 	defer ws.mu.Unlock()
 
+	// Update fees.
+	fees, err := chain.GetFees()
+	if err != nil {
+		log.Error("walletsyncer.get.fees.error:%v", err)
+	} else {
+		store.updateFees(fees)
+	}
+
+	// Update tickers.
+	tickers, err := chain.GetTickers()
+	if err != nil {
+		log.Error("walletsyncer.get.tickers.error:%v", err)
+	} else {
+		store.updateTickers(tickers)
+	}
+
 	uids := store.AllUID()
 	for _, uid := range uids {
 		wallet := store.Get(uid)
 		if wallet != nil {
 			addresses := wallet.Addresses()
 			for _, addr := range addresses {
+				// Unspents.
 				unspents, err := chain.GetUTXO(addr)
 				if err != nil {
 					log.Error("walletsyncer.address[%v].get.utxo.error:%v", addr, err)
 					continue
 				}
 				wallet.UpdateUnspents(addr, unspents)
+
+				// Txs.
+				txs, err := chain.GetTxs(addr)
+				if err != nil {
+					log.Error("walletsyncer.address[%v].get.txs.error:%v", addr, err)
+					continue
+				}
+				wallet.UpdateTxs(addr, txs)
 			}
 			if err := store.Write(wallet); err != nil {
 				log.Error("walletsyncer.wallet[%v].store.write.error:%v", wallet.UID, err)

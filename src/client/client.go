@@ -70,16 +70,8 @@ func NewClient(apiurl string, uid string, chainnet string, masterPrvKey string) 
 		mkpubkey = rsp.MasterPubKey
 	}
 
-	var rows [][]string
-	columns := []string{
-		"chainnet",
-		"mobile",
-		"apiurl",
-		"masterprvkey(local mask)",
-	}
-	rows = append(rows, []string{net, uid, apiurl, mkprvkey})
-	PrintQueryOutput(columns, rows)
-
+	// Help action.
+	helpAction(nil).Action()
 	return &Client{
 		net:          net,
 		uid:          uid,
@@ -93,10 +85,14 @@ func (cli *Client) Start() {
 	f := gorpl.New("")
 	f.RL.SetPrompt(fmt.Sprintf("threshwallet@%s> ", cli.net))
 	f.AddAction(*exitAction(cli))
+	f.AddAction(*helpAction(cli))
 	f.AddAction(*dumpKeyAction(cli))
 	f.AddAction(*tokenAction(cli))
 	f.AddAction(*walletBalanceAction(cli))
+	f.AddAction(*walletTxsAction(cli))
 	f.AddAction(*walletNewAddressAction(cli))
-	f.AddAction(*walletSendToAddress(cli))
+	f.AddAction(*walletSendFeesAction(cli))
+	f.AddAction(*walletSendToAddressAction(cli))
+	f.AddAction(*walletSendAllToAddressAction(cli))
 	f.Start()
 }

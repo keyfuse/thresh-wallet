@@ -20,11 +20,13 @@ import (
 )
 
 var (
-	flagConf string
+	flagConf  string
+	flagVcode string
 )
 
 func init() {
 	flag.StringVar(&flagConf, "c", "", "config file")
+	flag.StringVar(&flagVcode, "vcode", "on", "enable vcode")
 }
 
 func usage() {
@@ -44,11 +46,22 @@ func main() {
 	}
 	conf, err := server.LoadConfig(flagConf)
 	if err != nil {
-		log.Panic("server.load.config.error[%v]", err)
+		log.Panic("server.load.config.error[%+v]", err)
+	}
+
+	// Vcode check.
+	if flagVcode == "off" {
+		conf.EnableVCode = false
 	}
 	log.Info("%+v", conf)
 
+	// Router.
 	router := server.NewAPIRouter(log, conf)
+	if err := router.Init(); err != nil {
+		log.Panic("server.router.init.error[%+v]", err)
+	}
+	defer router.Close()
+
 	go http.ListenAndServe(conf.Endpoint, router)
 
 	// Handle SIGINT and SIGTERM signals.

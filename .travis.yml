@@ -29,6 +29,7 @@ matrix:
         - go get -u golang.org/x/mobile/cmd/gobind
       script:
         - make build
+        - make buildosx
         - make test
 
 after_success:

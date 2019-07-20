@@ -9,6 +9,7 @@ package server
 import (
 	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/tokublock/tokucore/network"
 	"github.com/tokublock/tokucore/xcore"
@@ -18,7 +19,9 @@ import (
 	"github.com/tokublock/tokucore/xcrypto/secp256k1"
 )
 
-func createSharedAddress(pos uint32, svrMasterPrvKey string, cliMasterPubkey string, net *network.Network) (string, error) {
+const ()
+
+func createSharedAddress(pos uint32, svrMasterPrvKey string, cliMasterPubkey string, net *network.Network, typ string) (string, error) {
 	svrmasterkey, err := bip32.NewHDKeyFromString(svrMasterPrvKey)
 	if err != nil {
 		return "", err
@@ -37,7 +40,14 @@ func createSharedAddress(pos uint32, svrMasterPrvKey string, cliMasterPubkey str
 	}
 	party := xcrypto.NewEcdsaParty(svrchild.PrivateKey())
 	sharepub := party.Phase1(clichild.PublicKey())
-	shared := xcore.NewPayToPubKeyHashAddress(sharepub.Hash160())
+
+	var shared xcore.Address
+	switch strings.ToUpper(typ) {
+	case "P2PKH":
+		shared = xcore.NewPayToPubKeyHashAddress(sharepub.Hash160())
+	default:
+		shared = xcore.NewPayToWitnessPubKeyHashAddress(sharepub.Hash160())
+	}
 	return shared.ToString(net), nil
 }
 

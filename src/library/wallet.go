@@ -9,6 +9,7 @@ package library
 import (
 	"fmt"
 	"net/http"
+	"strings"
 
 	"proto"
 
@@ -19,11 +20,44 @@ import (
 	"github.com/tokublock/tokucore/xcrypto/secp256k1"
 )
 
+// WalletPortfolioResponse --
+type WalletPortfolioResponse struct {
+	Status
+	CoinSymbol   string  `json:"coin_symbol"`
+	FiatSymbol   string  `json:"fiat_symbol"`
+	CurrentPrice float64 `json:"current_price"`
+}
+
+// APIWalletPortfolio -- portfolio api.
+func APIWalletPortfolio(url string, token string) string {
+	rsp := &WalletPortfolioResponse{}
+	rsp.Code = http.StatusOK
+	path := fmt.Sprintf("%s/api/wallet/portfolio", url)
+
+	req := &proto.WalletPortfolioRequest{}
+	httpRsp, err := proto.NewRequest().SetHeaders("Authorization", token).Post(path, req)
+	if err != nil {
+		rsp.Code = http.StatusInternalServerError
+		rsp.Message = err.Error()
+		return marshal(rsp)
+	}
+
+	ret := &proto.WalletPortfolioResponse{}
+	if err := httpRsp.Json(ret); err != nil {
+		rsp.Code = httpRsp.StatusCode()
+		rsp.Message = err.Error()
+		return marshal(rsp)
+	}
+	rsp.CoinSymbol = ret.CoinSymbol
+	rsp.FiatSymbol = ret.FiatSymbol
+	rsp.CurrentPrice = ret.CurrentPrice
+	return marshal(rsp)
+}
+
 // WalletBalanceResponse --
 type WalletBalanceResponse struct {
 	Status
-	AllBalance         uint64 `json:"all_balance"`
-	UnconfirmedBalance uint64 `json:"confirmed_balance"`
+	CoinValue uint64 `json:"coin_value"`
 }
 
 // APIWalletBalance -- Wallet balance api.
@@ -32,7 +66,8 @@ func APIWalletBalance(url string, token string) string {
 	rsp.Code = http.StatusOK
 	path := fmt.Sprintf("%s/api/wallet/balance", url)
 
-	httpRsp, err := proto.NewRequest().SetHeaders("Authorization", token).Post(path, nil)
+	req := &proto.WalletBalanceRequest{}
+	httpRsp, err := proto.NewRequest().SetHeaders("Authorization", token).Post(path, req)
 	if err != nil {
 		rsp.Code = http.StatusInternalServerError
 		rsp.Message = err.Error()
@@ -45,8 +80,7 @@ func APIWalletBalance(url string, token string) string {
 		rsp.Message = err.Error()
 		return marshal(rsp)
 	}
-	rsp.AllBalance = balance.AllBalance
-	rsp.UnconfirmedBalance = balance.UnconfirmedBalance
+	rsp.CoinValue = balance.CoinValue
 	return marshal(rsp)
 }
 
@@ -64,7 +98,6 @@ func APIEcdsaNewAddress(url string, token string) string {
 	path := fmt.Sprintf("%s/api/ecdsa/newaddress", url)
 
 	req := &proto.EcdsaAddressRequest{}
-
 	httpRsp, err := proto.NewRequest().SetHeaders("Authorization", token).Post(path, req)
 	if err != nil {
 		rsp.Code = http.StatusInternalServerError
@@ -74,7 +107,7 @@ func APIEcdsaNewAddress(url string, token string) string {
 
 	address := &proto.EcdsaAddressResponse{}
 	if err := httpRsp.Json(address); err != nil {
-		rsp.Code = http.StatusInternalServerError
+		rsp.Code = httpRsp.StatusCode()
 		rsp.Message = err.Error()
 		return marshal(rsp)
 	}
@@ -83,10 +116,87 @@ func APIEcdsaNewAddress(url string, token string) string {
 	return marshal(rsp)
 }
 
+// WalletTxsResponse --
+type WalletTxsResponse struct {
+	Status
+	Txs []proto.WalletTxsResponse `json:"txs"`
+}
+
+// APIWalletTxs -- get the txs.
+func APIWalletTxs(url string, token string, offset int, limit int) string {
+	rsp := &WalletTxsResponse{}
+	rsp.Code = http.StatusOK
+	path := fmt.Sprintf("%s/api/wallet/txs", url)
+
+	req := &proto.WalletTxsRequest{
+		Offset: offset,
+		Limit:  limit,
+	}
+	httpRsp, err := proto.NewRequest().SetHeaders("Authorization", token).Post(path, req)
+	if err != nil {
+		rsp.Code = http.StatusInternalServerError
+		rsp.Message = err.Error()
+		return marshal(rsp)
+	}
+
+	var txsRsp []proto.WalletTxsResponse
+	if err := httpRsp.Json(&txsRsp); err != nil {
+		rsp.Code = httpRsp.StatusCode()
+		rsp.Message = err.Error()
+		return marshal(rsp)
+	}
+	rsp.Txs = txsRsp
+	return marshal(rsp)
+}
+
+// WalletPrepareSendResponse --
+type WalletSendFeesResponse struct {
+	Status
+	Fees          uint64 `json:"fees"`
+	FeeMode       string `json:"feemode"`
+	TotalValue    uint64 `json:"total_value"`
+	SendableValue uint64 `json:"sendable_value"`
+}
+
+// APIWalletSendFees -- used to prepare the fees before the txn build.
+func APIWalletSendFees(url string, token string, sendValue uint64) string {
+	feemode := "fast"
+
+	rsp := &WalletSendFeesResponse{}
+	rsp.Code = http.StatusOK
+
+	// Get sendfees.
+	{
+		req := &proto.WalletSendFeesRequest{
+			Priority:  feemode,
+			SendValue: sendValue,
+		}
+		path := fmt.Sprintf("%s/api/wallet/sendfees", url)
+		httpRsp, err := proto.NewRequest().SetHeaders("Authorization", token).Post(path, req)
+		if err != nil {
+			rsp.Code = http.StatusInternalServerError
+			rsp.Message = err.Error()
+			return marshal(rsp)
+		}
+
+		feesRsp := &proto.WalletSendFeesResponse{}
+		if err := httpRsp.Json(feesRsp); err != nil {
+			rsp.Code = httpRsp.StatusCode()
+			rsp.Message = err.Error()
+			return marshal(rsp)
+		}
+		rsp.Fees = feesRsp.Fees
+		rsp.FeeMode = feemode
+		rsp.TotalValue = feesRsp.TotalValue
+		rsp.SendableValue = feesRsp.SendableValue
+	}
+	return marshal(rsp)
+}
+
 // WalletSendResponse --
 type WalletSendResponse struct {
 	Status
-	TxID string
+	TxID string `json:"txid"`
 }
 
 func APIWalletSend(url string, token string, chainnet string, masterPrvKeyStr string, toAddress string, amount uint64, fees uint64) string {
@@ -187,7 +297,12 @@ func APIWalletSend(url string, token string, chainnet string, masterPrvKeyStr st
 		}
 
 		for i, unspent := range unspents {
-			sighash := tx.RawSignatureHash(i, xcore.SigHashAll)
+			var sighash []byte
+			if strings.HasPrefix(unspent.Address, net.Bech32HRPSegwit) {
+				sighash = tx.WitnessSignatureHash(i, xcore.SigHashAll)
+			} else {
+				sighash = tx.RawSignatureHash(i, xcore.SigHashAll)
+			}
 
 			cliPrvKey, err := masterPrvKey.Derive(unspent.Pos)
 			if err != nil {
@@ -225,7 +340,7 @@ func APIWalletSend(url string, token string, chainnet string, masterPrvKeyStr st
 				}
 				r2rsp := &proto.EcdsaR2Response{}
 				if err := httpRsp.Json(&r2rsp); err != nil {
-					rsp.Code = http.StatusInternalServerError
+					rsp.Code = httpRsp.StatusCode()
 					rsp.Message = err.Error()
 					return marshal(rsp)
 				}
@@ -259,7 +374,7 @@ func APIWalletSend(url string, token string, chainnet string, masterPrvKeyStr st
 				}
 				s2rsp := &proto.EcdsaS2Response{}
 				if err := httpRsp.Json(&s2rsp); err != nil {
-					rsp.Code = http.StatusInternalServerError
+					rsp.Code = httpRsp.StatusCode()
 					rsp.Message = err.Error()
 					return marshal(rsp)
 				}
@@ -308,7 +423,7 @@ func APIWalletSend(url string, token string, chainnet string, masterPrvKeyStr st
 
 			pushrsp := &proto.TxPushResponse{}
 			if err := httpRsp.Json(pushrsp); err != nil {
-				rsp.Code = http.StatusInternalServerError
+				rsp.Code = httpRsp.StatusCode()
 				rsp.Message = err.Error()
 				return marshal(rsp)
 			}

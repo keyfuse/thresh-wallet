@@ -15,8 +15,8 @@ import (
 )
 
 func TestVCodeHandler(t *testing.T) {
-	ts := MockServer()
-	defer ts.Close()
+	ts, cleanup := MockServer()
+	defer cleanup()
 
 	// VCode.
 	{
@@ -30,8 +30,8 @@ func TestVCodeHandler(t *testing.T) {
 }
 
 func TestTokenHandler(t *testing.T) {
-	ts := MockServer()
-	defer ts.Close()
+	ts, cleanup := MockServer()
+	defer cleanup()
 
 	// OK.
 	{

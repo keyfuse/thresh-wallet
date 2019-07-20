@@ -11,9 +11,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"strings"
 	"sync"
 
 	"xlog"
+
+	"github.com/tokublock/tokucore/network"
 )
 
 // WalletStore --
@@ -22,15 +25,28 @@ type WalletStore struct {
 	dir     string
 	log     *xlog.Log
 	conf    *Config
+	net     *network.Network
+	fees    map[string]float32
 	wallets map[string]*Wallet
+	tickers map[string]Ticker
 }
 
 // NewWalletStore -- creates new WalletStore.
 func NewWalletStore(log *xlog.Log, conf *Config) *WalletStore {
+	var net *network.Network
+	switch conf.ChainNet {
+	case testnet:
+		net = network.TestNet
+	case mainnet:
+		net = network.MainNet
+	}
 	return &WalletStore{
 		log:     log,
 		conf:    conf,
+		net:     net,
+		fees:    make(map[string]float32),
 		wallets: make(map[string]*Wallet),
+		tickers: make(map[string]Ticker),
 	}
 }
 
@@ -112,6 +128,7 @@ func (s *WalletStore) Read(path string) (*Wallet, error) {
 	if wallet.Address == nil {
 		wallet.Address = make(map[string]*Address)
 	}
+	wallet.net = s.net
 	return wallet, nil
 }
 
@@ -138,4 +155,53 @@ func (s *WalletStore) AllUID() []string {
 		uids = append(uids, uid)
 	}
 	return uids
+}
+
+func (s *WalletStore) updateFees(fees map[string]float32) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.fees = fees
+}
+
+func (s *WalletStore) updateTickers(tickers map[string]Ticker) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.tickers = tickers
+}
+
+func (s *WalletStore) getTicker(code string) (Ticker, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	ticker, ok := s.tickers[code]
+	if !ok {
+		return ticker, fmt.Errorf("wallet.store.get.ticker.code[%v].cant.found", code)
+	}
+	return ticker, nil
+}
+
+// FeesPerKB -- used to return the fees.
+func (s *WalletStore) FeesPerKB(priority string) int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	fees := 1000
+	switch strings.ToUpper(priority) {
+	case "FAST":
+		if v, ok := s.fees["2"]; ok {
+			fees = int(v * 1000)
+		}
+	case "NORMAL":
+		if v, ok := s.fees["4"]; ok {
+			fees = int(v * 1000)
+		}
+	case "SLOW":
+		if v, ok := s.fees["6"]; ok {
+			fees = int(v * 1000)
+		}
+	default:
+		if v, ok := s.fees["4"]; ok {
+			fees = int(v * 1000)
+		}
+	}
+	return fees
 }

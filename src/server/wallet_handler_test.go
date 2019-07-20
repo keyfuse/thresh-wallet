@@ -15,20 +15,21 @@ import (
 )
 
 func TestWalletBalance(t *testing.T) {
-	ts := MockServer()
-	defer ts.Close()
+	ts, cleanup := MockServer()
+	defer cleanup()
 
 	// Balance.
 	{
-		httpRsp, err := proto.NewRequest().SetHeaders("Authorization", mockToken).Post(ts.URL+"/api/wallet/balance", nil)
+		req := &proto.WalletBalanceRequest{}
+		httpRsp, err := proto.NewRequest().SetHeaders("Authorization", mockToken).Post(ts.URL+"/api/wallet/balance", req)
 		assert.Nil(t, err)
 		assert.Equal(t, 200, httpRsp.StatusCode())
 	}
 }
 
 func TestWalletUnspent(t *testing.T) {
-	ts := MockServer()
-	defer ts.Close()
+	ts, cleanup := MockServer()
+	defer cleanup()
 
 	{
 		req := &proto.WalletUnspentRequest{
@@ -40,9 +41,226 @@ func TestWalletUnspent(t *testing.T) {
 	}
 }
 
+func TestWalletTxs(t *testing.T) {
+	ts, cleanup := MockServer()
+	defer cleanup()
+
+	{
+		req := &proto.WalletTxsRequest{
+			Offset: 0,
+			Limit:  3,
+		}
+		httpRsp, err := proto.NewRequest().SetHeaders("Authorization", mockToken).Post(ts.URL+"/api/wallet/txs", req)
+		assert.Nil(t, err)
+		assert.Equal(t, 200, httpRsp.StatusCode())
+
+		resp := []proto.WalletTxsResponse{}
+		httpRsp.Json(&resp)
+		assert.Equal(t, 3, len(resp))
+	}
+
+	// 2
+	{
+		req := &proto.WalletTxsRequest{
+			Offset: 1,
+			Limit:  3,
+		}
+		httpRsp, err := proto.NewRequest().SetHeaders("Authorization", mockToken).Post(ts.URL+"/api/wallet/txs", req)
+		assert.Nil(t, err)
+		assert.Equal(t, 200, httpRsp.StatusCode())
+
+		resp := []proto.WalletTxsResponse{}
+		httpRsp.Json(&resp)
+		assert.Equal(t, 2, len(resp))
+	}
+
+	// 1
+	{
+		req := &proto.WalletTxsRequest{
+			Offset: 2,
+			Limit:  3,
+		}
+		httpRsp, err := proto.NewRequest().SetHeaders("Authorization", mockToken).Post(ts.URL+"/api/wallet/txs", req)
+		assert.Nil(t, err)
+		assert.Equal(t, 200, httpRsp.StatusCode())
+
+		resp := []proto.WalletTxsResponse{}
+		httpRsp.Json(&resp)
+		assert.Equal(t, 1, len(resp))
+	}
+
+	// nil
+	{
+		req := &proto.WalletTxsRequest{
+			Offset: 3,
+			Limit:  3,
+		}
+		httpRsp, err := proto.NewRequest().SetHeaders("Authorization", mockToken).Post(ts.URL+"/api/wallet/txs", req)
+		assert.Nil(t, err)
+		assert.Equal(t, 200, httpRsp.StatusCode())
+
+		resp := []proto.WalletTxsResponse{}
+		httpRsp.Json(&resp)
+		assert.Equal(t, 0, len(resp))
+	}
+}
+
+func TestWalletSendFees(t *testing.T) {
+	ts, cleanup := MockServer()
+	defer cleanup()
+
+	// Fast.
+	{
+		req := &proto.WalletSendFeesRequest{
+			Priority:  "fast",
+			SendValue: 1000,
+		}
+		httpRsp, err := proto.NewRequest().SetHeaders("Authorization", mockToken).Post(ts.URL+"/api/wallet/sendfees", req)
+		assert.Nil(t, err)
+		assert.Equal(t, 200, httpRsp.StatusCode())
+
+		got := &proto.WalletSendFeesResponse{}
+		httpRsp.Json(got)
+
+		want := &proto.WalletSendFeesResponse{
+			Fees:          uint64(225),
+			TotalValue:    uint64(103266),
+			SendableValue: uint64(1000),
+		}
+		assert.Equal(t, want, got)
+	}
+
+	// Normal.
+	{
+		req := &proto.WalletSendFeesRequest{
+			Priority:  "normal",
+			SendValue: 1000,
+		}
+		httpRsp, err := proto.NewRequest().SetHeaders("Authorization", mockToken).Post(ts.URL+"/api/wallet/sendfees", req)
+		assert.Nil(t, err)
+		assert.Equal(t, 200, httpRsp.StatusCode())
+
+		got := &proto.WalletSendFeesResponse{}
+		httpRsp.Json(got)
+
+		want := &proto.WalletSendFeesResponse{
+			Fees:          uint64(180),
+			TotalValue:    uint64(103266),
+			SendableValue: uint64(1000),
+		}
+		assert.Equal(t, want, got)
+	}
+
+	// Slow.
+	{
+		req := &proto.WalletSendFeesRequest{
+			Priority:  "slow",
+			SendValue: 1000,
+		}
+		httpRsp, err := proto.NewRequest().SetHeaders("Authorization", mockToken).Post(ts.URL+"/api/wallet/sendfees", req)
+		assert.Nil(t, err)
+		assert.Equal(t, 200, httpRsp.StatusCode())
+
+		got := &proto.WalletSendFeesResponse{}
+		httpRsp.Json(got)
+
+		want := &proto.WalletSendFeesResponse{
+			Fees:          uint64(135),
+			TotalValue:    uint64(103266),
+			SendableValue: uint64(1000),
+		}
+		assert.Equal(t, want, got)
+	}
+
+	// Not enough.
+	{
+		req := &proto.WalletSendFeesRequest{
+			Priority:  "fast",
+			SendValue: 103260,
+		}
+		httpRsp, err := proto.NewRequest().SetHeaders("Authorization", mockToken).Post(ts.URL+"/api/wallet/sendfees", req)
+		assert.Nil(t, err)
+		assert.Equal(t, 200, httpRsp.StatusCode())
+
+		got := &proto.WalletSendFeesResponse{}
+		httpRsp.Json(got)
+
+		want := &proto.WalletSendFeesResponse{
+			Fees:          uint64(374),
+			TotalValue:    uint64(103266),
+			SendableValue: uint64(102892),
+		}
+		assert.Equal(t, want, got)
+	}
+
+	// Send all.
+	{
+		req := &proto.WalletSendFeesRequest{
+			Priority:  "fast",
+			SendValue: 103266,
+		}
+		httpRsp, err := proto.NewRequest().SetHeaders("Authorization", mockToken).Post(ts.URL+"/api/wallet/sendfees", req)
+		assert.Nil(t, err)
+		assert.Equal(t, 200, httpRsp.StatusCode())
+
+		got := &proto.WalletSendFeesResponse{}
+		httpRsp.Json(got)
+
+		want := &proto.WalletSendFeesResponse{
+			Fees:          uint64(374),
+			TotalValue:    uint64(103266),
+			SendableValue: uint64(102892),
+		}
+		assert.Equal(t, want, got)
+	}
+}
+
+func TestWalletPortfolio(t *testing.T) {
+	ts, cleanup := MockServer()
+	defer cleanup()
+
+	// Code empty.
+	{
+		req := &proto.WalletPortfolioRequest{}
+		httpRsp, err := proto.NewRequest().SetHeaders("Authorization", mockToken).Post(ts.URL+"/api/wallet/portfolio", req)
+		assert.Nil(t, err)
+		assert.Equal(t, 200, httpRsp.StatusCode())
+
+		got := &proto.WalletPortfolioResponse{}
+		httpRsp.Json(got)
+
+		want := &proto.WalletPortfolioResponse{
+			CoinSymbol:   "BTC",
+			FiatSymbol:   "¥",
+			CurrentPrice: 73711.13,
+		}
+		assert.Equal(t, want, got)
+	}
+
+	// Code USD.
+	{
+		req := &proto.WalletPortfolioRequest{
+			Code: "USD",
+		}
+		httpRsp, err := proto.NewRequest().SetHeaders("Authorization", mockToken).Post(ts.URL+"/api/wallet/portfolio", req)
+		assert.Nil(t, err)
+		assert.Equal(t, 200, httpRsp.StatusCode())
+
+		got := &proto.WalletPortfolioResponse{}
+		httpRsp.Json(got)
+
+		want := &proto.WalletPortfolioResponse{
+			CoinSymbol:   "BTC",
+			FiatSymbol:   "$",
+			CurrentPrice: 10721.13,
+		}
+		assert.Equal(t, want, got)
+	}
+}
+
 func TestWalletPushTx(t *testing.T) {
-	ts := MockServer()
-	defer ts.Close()
+	ts, cleanup := MockServer()
+	defer cleanup()
 
 	{
 		req := &proto.TxPushRequest{

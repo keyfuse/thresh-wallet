@@ -20,7 +20,5 @@ func TestBlockstreamChain(t *testing.T) {
 
 	chain := NewBlockstreamChain(log, conf)
 
-	unspent, err := chain.GetUTXO("mkTcdRZAtJLYggv6zspQg6GP22JKS3DSXo")
-	assert.Nil(t, err)
-	assert.NotNil(t, unspent)
+	assert.NotNil(t, chain)
 }

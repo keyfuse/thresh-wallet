@@ -9,6 +9,8 @@ package server
 import (
 	"xlog"
 
+	"github.com/didip/tollbooth"
+	"github.com/didip/tollbooth_chi"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/go-chi/cors"
@@ -37,23 +39,52 @@ func NewAPIRouter(log *xlog.Log, conf *Config) APIMux {
 
 	handler := NewHandler(log, conf)
 	router.Group(func(r chi.Router) {
+		// Limiter.
+		lmt := tollbooth.NewLimiter(0.1, nil)
+		lmt.SetMessage("You have reached maximum request limit.")
+		r.Use(tollbooth_chi.LimitHandler(lmt))
+
+		r.Get("/api/ping", handler.ping)
+		r.Get("/api/server/info", handler.info)
 		r.Post("/api/vcode", handler.vcodefn)
 		r.Post("/api/token", handler.tokenfn)
 	})
 
 	router.Group(func(r chi.Router) {
+		// Limiter.
+		lmt := tollbooth.NewLimiter(5, nil)
+		lmt.SetMessage("You have reached maximum request limit.")
+		r.Use(tollbooth_chi.LimitHandler(lmt))
+
 		r.Use(jwtauth.Verifier(handler.tokenAuth))
 		r.Use(jwtauth.Authenticator)
 
 		// Wallet.
+		r.Post("/api/wallet/txs", handler.walletTxs)
+		r.Post("/api/wallet/pushtx", handler.walletPushTx)
 		r.Post("/api/wallet/balance", handler.walletBalance)
 		r.Post("/api/wallet/unspent", handler.walletUnspent)
-		r.Post("/api/wallet/pushtx", handler.walletPushTx)
+		r.Post("/api/wallet/sendfees", handler.walletSendFees)
+		r.Post("/api/wallet/portfolio", handler.walletPortfolio)
 
 		// ECDSA.
 		r.Post("/api/ecdsa/r2", handler.ecdsaR2)
 		r.Post("/api/ecdsa/s2", handler.ecdsaS2)
 		r.Post("/api/ecdsa/newaddress", handler.ecdsaNewAddress)
+
+		// Backup.
+		r.Post("/api/backup/verify", handler.backupVerify)
+		r.Post("/api/backup/store", handler.backupStore)
 	})
 	return APIMux{router, handler}
+}
+
+// Init -- used init the mux.
+func (a *APIMux) Init() error {
+	return a.handler.Init()
+}
+
+// Close -- used to close the mux.
+func (a *APIMux) Close() {
+	a.handler.Close()
 }

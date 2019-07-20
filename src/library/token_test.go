@@ -15,8 +15,8 @@ import (
 )
 
 func TestTokenAPIGetVCode(t *testing.T) {
-	ts := server.MockServer()
-	defer ts.Close()
+	ts, cleanup := server.MockServer()
+	defer cleanup()
 
 	mobile := "10086"
 	body := APIGetVCode(ts.URL, mobile)
@@ -27,8 +27,8 @@ func TestTokenAPIGetVCode(t *testing.T) {
 }
 
 func TestTokenAPIGetToken(t *testing.T) {
-	ts := server.MockServer()
-	defer ts.Close()
+	ts, cleanup := server.MockServer()
+	defer cleanup()
 
 	mobile := "10086"
 	body := APIGetToken(ts.URL, mobile, "vcode", mockMasterPubKey)

@@ -35,9 +35,6 @@ func NewHandler(log *xlog.Log, conf *Config) *Handler {
 		netprefix = "xpub"
 	}
 	wdb := NewWalletDB(log, conf)
-	if err := wdb.Open(conf.DataDir); err != nil {
-		log.Panic("handler.new.panic:%+v", err)
-	}
 	vcode := NewVcode(log, conf)
 	tokenAuth := jwtauth.New("HS256", []byte(conf.TokenSecret), nil)
 	handler := &Handler{
@@ -49,6 +46,20 @@ func NewHandler(log *xlog.Log, conf *Config) *Handler {
 		tokenAuth: tokenAuth,
 	}
 	return handler
+}
+
+// Init -- starts the handler.
+func (h *Handler) Init() error {
+	conf := h.conf
+	wdb := h.wdb
+
+	return wdb.Open(conf.DataDir)
+}
+
+// Close -- used to close the handler.
+func (h *Handler) Close() {
+	wdb := h.wdb
+	wdb.Close()
 }
 
 func (h *Handler) userinfo(tag string, r *http.Request) (string, string, error) {

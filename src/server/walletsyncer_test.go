@@ -20,6 +20,7 @@ func TestWalletSyncer(t *testing.T) {
 	conf := MockConfig()
 	log := xlog.NewStdLog(xlog.Level(xlog.INFO))
 	wdb := NewWalletDB(log, conf)
+	wdb.setChain(newMockChain(log))
 	defer wdb.Close()
 
 	// Open.
@@ -40,7 +41,7 @@ func TestWalletSyncer(t *testing.T) {
 	// New address.
 	{
 		for i := 0; i < 3; i++ {
-			addr, err := wdb.NewAddress(uid, mockCliMasterPubKey)
+			addr, err := wdb.NewAddress(uid, mockCliMasterPubKey, "")
 			assert.Nil(t, err)
 			t.Logf("addr:%+v", addr)
 		}

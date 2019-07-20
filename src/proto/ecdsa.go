@@ -16,6 +16,7 @@ import (
 // EcdsaAddressRequest --
 type EcdsaAddressRequest struct {
 	DeviceID string `json:"deviceid"`
+	Type     string `json:"type"`
 }
 
 // EcdsaAddressResponse --

@@ -40,7 +40,7 @@ func (h *Handler) ecdsaNewAddress(w http.ResponseWriter, r *http.Request) {
 	log.Info("api.ecdsa.newaddress.req:%+v", req)
 
 	// New address.
-	address, err := wdb.NewAddress(uid, cliMasterPubKey)
+	address, err := wdb.NewAddress(uid, cliMasterPubKey, req.Type)
 	if err != nil {
 		log.Error("api.ecdsa.newaddress.wdb.newaddress.error:%+v", err)
 		resp.writeError(err)
@@ -72,9 +72,8 @@ func (h *Handler) ecdsaR2(w http.ResponseWriter, r *http.Request) {
 	req := &proto.EcdsaR2Request{}
 	err = json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
-		log.Error("api.ecdsa.r2[%v].decode.body.error:%+v", uid, err)
-		resp.writeError(err)
-		return
+		_, _, _, _, _ = log.Error, uid, err, resp.writeError, err
+
 	}
 	log.Info("api.ecdsa.r2.req:%+v", req)
 

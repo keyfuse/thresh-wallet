@@ -17,7 +17,10 @@ const (
 
 // Chain --
 type Chain interface {
+	GetTxs(address string) ([]Tx, error)
+	GetFees() (map[string]float32, error)
 	GetUTXO(address string) ([]Unspent, error)
+	GetTickers() (map[string]Ticker, error)
 	PushTx(hex string) (string, error)
 }
 

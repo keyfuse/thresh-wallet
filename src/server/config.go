@@ -18,7 +18,7 @@ type Config struct {
 	Endpoint             string `json:"endpoint"`
 	TokenSecret          string `json:"token_secret"`
 	SpvProvider          string `json:"spv_provider"`
-	DisableVCode         bool   `json:"disable_vcode"`
+	EnableVCode          bool   `json:"enable_vcode"`
 	VCodeExpired         int    `json:"vcode_expired"`
 	WalletSyncIntervalMs int    `json:"wallet_sync_interval_ms"`
 }
@@ -31,6 +31,7 @@ func DefaultConfig() *Config {
 		Endpoint:             ":9099",
 		SpvProvider:          "blockstream",
 		TokenSecret:          "thresh-wallet-demo-token-secret",
+		EnableVCode:          true,
 		VCodeExpired:         5 * 60,
 		WalletSyncIntervalMs: 30 * 1000,
 	}

@@ -8,7 +8,6 @@ package server
 
 import (
 	"fmt"
-	"sort"
 	"sync"
 
 	"xlog"
@@ -111,6 +110,7 @@ func (wdb *WalletDB) OpenUIDWallet(uid string, cliMasterPubKey string) (*Wallet,
 		}
 		svrMasterPrvKey := masterKey.ToString(net)
 		wallet = &Wallet{
+			net:             net,
 			UID:             uid,
 			Address:         make(map[string]*Address),
 			CliMasterPubKey: cliMasterPubKey,
@@ -127,8 +127,7 @@ func (wdb *WalletDB) OpenUIDWallet(uid string, cliMasterPubKey string) (*Wallet,
 }
 
 // NewAddress -- used to generate new address of this uid.
-func (wdb *WalletDB) NewAddress(uid string, cliMasterPubKey string) (*Address, error) {
-	net := wdb.net
+func (wdb *WalletDB) NewAddress(uid string, cliMasterPubKey string, typ string) (*Address, error) {
 	store := wdb.store
 
 	// Get wallet.
@@ -142,25 +141,15 @@ func (wdb *WalletDB) NewAddress(uid string, cliMasterPubKey string) (*Address, e
 		return nil, err
 	}
 
-	// New address.
-	wallet.Lock()
-	pos := wallet.LastPos
-	addr, err := createSharedAddress(pos, wallet.SvrMasterPrvKey, wallet.CliMasterPubKey, net)
+	address, err := wallet.NewAddress(typ)
 	if err != nil {
-		wallet.Unlock()
 		return nil, err
 	}
 
-	address := &Address{
-		Pos:     pos,
-		Address: addr,
-	}
-	wallet.Address[addr] = address
-	wallet.LastPos++
-	wallet.Unlock()
-
 	// Write to db.
-	store.Write(wallet)
+	if err := store.Write(wallet); err != nil {
+		return nil, err
+	}
 	return address, nil
 }
 
@@ -189,69 +178,42 @@ func (wdb *WalletDB) Balance(uid string) (*Balance, error) {
 	if wallet == nil {
 		return nil, fmt.Errorf("wdb.balance.uid[%v].cant.found", uid)
 	}
-	wallet.Lock()
-	defer wallet.Unlock()
-	balance := &Balance{}
-	for _, addr := range wallet.Address {
-		balance.AllBalance += addr.Balance.AllBalance
-		balance.UnconfirmedBalance += addr.Balance.UnconfirmedBalance
-	}
-	return balance, nil
+	return wallet.Balance(), nil
 }
 
-// UnspentsByAmount -- used to return unspent which all the value upper than the amount.
+// Unspents -- used to return unspent which all the value upper than the amount.
 func (wdb *WalletDB) Unspents(uid string, amount uint64) ([]UTXO, error) {
-	var rsp []UTXO
-	var utxos []UTXO
-	var thresh uint64
-	var balance uint64
-
-	net := wdb.net
 	store := wdb.store
 
 	// Get wallet.
 	wallet := store.Get(uid)
 	if wallet == nil {
-		return nil, fmt.Errorf("wdb.unspentsbyamount[%v].cant.found", uid)
+		return nil, fmt.Errorf("wdb.unspents.uid[%v].cant.found", uid)
 	}
-	wallet.Lock()
-	defer wallet.Unlock()
+	return wallet.Unspents(amount)
+}
 
-	for _, addr := range wallet.Address {
-		for _, unspent := range addr.Unspents {
-			svrpubkey, err := createSvrChildPubKey(addr.Pos, wallet.SvrMasterPrvKey, net)
-			if err != nil {
-				return nil, err
-			}
-			utxos = append(utxos, UTXO{
-				Pos:          addr.Pos,
-				Txid:         unspent.Txid,
-				Vout:         unspent.Vout,
-				Value:        unspent.Value,
-				Address:      addr.Address,
-				Confirmed:    unspent.Confirmed,
-				SvrPubKey:    svrpubkey,
-				Scriptpubkey: unspent.Scriptpubkey,
-			})
-		}
-		balance += addr.Balance.AllBalance
+func (wdb *WalletDB) Txs(uid string, offset int, limit int) ([]Tx, error) {
+	store := wdb.store
+
+	// Get wallet.
+	wallet := store.Get(uid)
+	if wallet == nil {
+		return nil, fmt.Errorf("wdb.txs.uid[%v].cant.found", uid)
 	}
+	return wallet.Txs(offset, limit), nil
+}
 
-	// Check.
-	if balance <= amount {
-		return nil, fmt.Errorf("wdb.unpsentsbyamount[%v].suffient.req.amount[%v].allbalance[%v]", uid, amount, balance)
+// SendFees -- returns the fee info for this send.
+func (wdb *WalletDB) SendFees(uid string, priority string, sendAmount uint64) (*SendFees, error) {
+	store := wdb.store
+
+	// Get wallet.
+	wallet := store.Get(uid)
+	if wallet == nil {
+		return nil, fmt.Errorf("wdb.send.fees.uid[%v].cant.found", uid)
 	}
 
-	// Sort by value desc.
-	sort.Slice(utxos, func(i, j int) bool { return utxos[i].Value > utxos[j].Value })
-
-	// Patch.
-	for _, utxo := range utxos {
-		thresh += utxo.Value
-		rsp = append(rsp, utxo)
-		if thresh > amount {
-			break
-		}
-	}
-	return rsp, nil
+	feesperkb := store.FeesPerKB(priority)
+	return wallet.SendFees(sendAmount, feesperkb)
 }

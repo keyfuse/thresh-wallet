@@ -12,6 +12,8 @@ import (
 
 	"xlog"
 
+	"github.com/tokublock/tokucore/network"
+
 	"github.com/fortytw2/leaktest"
 	"github.com/stretchr/testify/assert"
 )
@@ -20,6 +22,7 @@ func TestWalletStore(t *testing.T) {
 	defer leaktest.Check(t)()
 
 	wallet := NewWallet()
+	wallet.net = network.TestNet
 	wallet.UID = mockUID
 	wallet.SvrMasterPrvKey = mockSvrMasterPrvKey
 	wallet.CliMasterPubKey = mockCliMasterPubKey

@@ -29,8 +29,8 @@ type BlockstreamUTXO struct {
 // BlockstreamTx --
 type BlockstreamTx struct {
 	Txid     string `json:"txid"`
-	Version  int    `json:"version"`
-	Locktime int    `json:"locktime"`
+	Version  int64  `json:"version"`
+	Locktime int64  `json:"locktime"`
 	Vin      []struct {
 		Txid    string `json:"txid"`
 		Vout    int    `json:"vout"`
@@ -59,7 +59,7 @@ type BlockstreamTx struct {
 	Fee    int64 `json:"fee"`
 	Status struct {
 		Confirmed   bool   `json:"confirmed"`
-		BlockHeight int    `json:"block_height"`
+		BlockHeight int64  `json:"block_height"`
 		BlockHash   string `json:"block_hash"`
 		BlockTime   int64  `json:"block_time"`
 	} `json:"status"`
@@ -136,8 +136,88 @@ func (c *BlockstreamChain) GetUTXO(address string) ([]Unspent, error) {
 		}
 		unspents = append(unspents, unspent)
 	}
-
 	return unspents, nil
+}
+
+// GetTxs -- used to get transactions by address.
+func (c *BlockstreamChain) GetTxs(address string) ([]Tx, error) {
+	path := fmt.Sprintf("%s/address/%s/txs", c.url, address)
+
+	httpRsp, err := proto.NewRequest().Get(path)
+	if err != nil {
+		return nil, err
+	}
+	if httpRsp.StatusCode() != 200 {
+		return nil, fmt.Errorf("blockstream.get.txs.rsp.error:%v", httpRsp.StatusCode())
+	}
+
+	var bstxs []BlockstreamTx
+	if err := httpRsp.Json(&bstxs); err != nil {
+		return nil, err
+	}
+
+	var txs []Tx
+	for _, tx := range bstxs {
+		var sentValue int64
+		var receivedValue int64
+
+		for _, vin := range tx.Vin {
+			if vin.Prevout.ScriptpubkeyAddress == address {
+				sentValue += vin.Prevout.Value
+			}
+		}
+		for _, vout := range tx.Vout {
+			if vout.ScriptpubkeyAddress == address {
+				receivedValue += vout.Value
+			}
+		}
+
+		tx := Tx{
+			Txid:        tx.Txid,
+			Fee:         tx.Fee,
+			Value:       receivedValue - sentValue,
+			Confirmed:   tx.Status.Confirmed,
+			BlockTime:   tx.Status.BlockTime,
+			BlockHeight: tx.Status.BlockHeight,
+		}
+		txs = append(txs, tx)
+	}
+	return txs, nil
+}
+
+// GetFees -- used to get the fees from the chain mempool.
+func (c *BlockstreamChain) GetFees() (map[string]float32, error) {
+	path := fmt.Sprintf("%s/fee-estimates", c.url)
+
+	httpRsp, err := proto.NewRequest().Get(path)
+	if err != nil {
+		return nil, err
+	}
+	if httpRsp.StatusCode() != 200 {
+		return nil, fmt.Errorf("blockstream.get.fees.rsp.error:%v", httpRsp.StatusCode())
+	}
+
+	fees := make(map[string]float32)
+	if err := httpRsp.Json(&fees); err != nil {
+		return nil, err
+	}
+	return fees, nil
+}
+
+func (c *BlockstreamChain) GetTickers() (map[string]Ticker, error) {
+	httpRsp, err := proto.NewRequest().Get("https://blockchain.info/ticker")
+	if err != nil {
+		return nil, err
+	}
+	if httpRsp.StatusCode() != 200 {
+		return nil, fmt.Errorf("blockstream.get.tickers.rsp.error:%v", httpRsp.StatusCode())
+	}
+
+	tickers := make(map[string]Ticker)
+	if err := httpRsp.Json(&tickers); err != nil {
+		return nil, err
+	}
+	return tickers, nil
 }
 
 // PushTx -- used to push tx to the chain.

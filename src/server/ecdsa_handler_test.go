@@ -19,8 +19,8 @@ import (
 )
 
 func TestEcdsaAddressHandler(t *testing.T) {
-	ts := MockServer()
-	defer ts.Close()
+	ts, cleanup := MockServer()
+	defer cleanup()
 
 	// Token.
 	{
@@ -49,8 +49,8 @@ func TestEcdsaR2S2Handler(t *testing.T) {
 	var pos uint32
 	var shareR *secp256k1.Scalar
 
-	ts := MockServer()
-	defer ts.Close()
+	ts, cleanup := MockServer()
+	defer cleanup()
 
 	pos = 1
 	hash := []byte{0x01, 0x02, 0x03, 0x04}

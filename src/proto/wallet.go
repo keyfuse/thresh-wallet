@@ -6,12 +6,25 @@
 
 package proto
 
-import ()
+// WalletPortfolioRequest --
+type WalletPortfolioRequest struct {
+	Code string `json:"code"`
+}
 
-// WalletBalance --
+// WalletPortfolioResponse --
+type WalletPortfolioResponse struct {
+	CoinSymbol   string  `json:"coin_symbol"`
+	FiatSymbol   string  `json:"fiat_symbol"`
+	CurrentPrice float64 `json:"current_price"`
+}
+
+// WalletBalanceRequest --
+type WalletBalanceRequest struct {
+}
+
+// WalletBalanceResponse --
 type WalletBalanceResponse struct {
-	AllBalance         uint64 `json:"all_balance"`
-	UnconfirmedBalance uint64 `json:"confirmed_balance"`
+	CoinValue uint64 `json:"coin_value"`
 }
 
 // WalletUnspentRequest --
@@ -39,4 +52,34 @@ type TxPushRequest struct {
 // TxPushResponse --
 type TxPushResponse struct {
 	TxID string `json:"txid"`
+}
+
+// WalletTxsRequest --
+type WalletTxsRequest struct {
+	Offset  int    `json:"offset"`
+	Limit   int    `json:"limit"`
+	OrderBy string `json:"orderby"`
+}
+
+// WalletTxsResponse --
+type WalletTxsResponse struct {
+	Txid        string `json:"txid"`
+	Fee         int64  `json:"fee"`
+	Value       int64  `json:"value"`
+	Confirmed   bool   `json:"confirmed"`
+	BlockTime   int64  `json:"block_time"`
+	BlockHeight int64  `json:"block_height"`
+}
+
+// WalletSendFeesRequest --
+type WalletSendFeesRequest struct {
+	Priority  string `json:"priority"`
+	SendValue uint64 `json:"send_value"`
+}
+
+// WalletSendFeesResponse --
+type WalletSendFeesResponse struct {
+	Fees          uint64 `json:"fees"`
+	TotalValue    uint64 `json:"total_value"`
+	SendableValue uint64 `json:"sendable_value"`
 }

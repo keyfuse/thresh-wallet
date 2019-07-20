@@ -23,6 +23,7 @@ func TestWalletDB(t *testing.T) {
 	conf := MockConfig()
 	log := xlog.NewStdLog(xlog.Level(xlog.INFO))
 	wdb := NewWalletDB(log, conf)
+	wdb.setChain(newMockChain(log))
 	defer wdb.Close()
 
 	// Open.
@@ -43,7 +44,7 @@ func TestWalletDB(t *testing.T) {
 	// New address.
 	{
 		for i := 0; i < 10; i++ {
-			_, err := wdb.NewAddress(mockUID, mockCliMasterPubKey)
+			_, err := wdb.NewAddress(mockUID, mockCliMasterPubKey, "")
 			assert.Nil(t, err)
 		}
 	}
@@ -54,11 +55,17 @@ func TestWalletDB(t *testing.T) {
 
 		for i := 0; i < 30; i++ {
 			wg.Add(1)
-			go func() {
+			go func(k int) {
 				defer wg.Done()
-				_, err := wdb.NewAddress(mockUID, mockCliMasterPubKey)
+				typ := ""
+				if k%2 == 0 {
+					typ = "p2wpkh"
+				} else {
+					typ = ""
+				}
+				_, err := wdb.NewAddress(mockUID, mockCliMasterPubKey, typ)
 				assert.Nil(t, err)
-			}()
+			}(i)
 		}
 		wg.Wait()
 	}

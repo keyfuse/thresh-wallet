@@ -59,7 +59,7 @@ func (h *Handler) tokenfn(w http.ResponseWriter, r *http.Request) {
 	log.Info("api.token.req:%+v", req)
 
 	// Check Vcode.
-	if !conf.DisableVCode {
+	if conf.EnableVCode {
 		if err := vcode.Check(req.UID, req.VCode); err != nil {
 			log.Error("api.token.vcode.error:%+v", err)
 			resp.writeError(err)

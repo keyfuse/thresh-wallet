@@ -49,6 +49,6 @@ coverage:
 
 check:
 	go get -v github.com/golangci/golangci-lint/cmd/golangci-lint
-	bin/golangci-lint run -D errcheck src/proto/... src/library/... src/server/...
+	bin/golangci-lint run -D errcheck src/proto/... src/library/... src/server/... ../src/client/...
 
 .PHONY: build clean install fmt test coverage
