@@ -34,7 +34,7 @@ func TestWalletPortfolio(t *testing.T) {
 	rsp := &WalletPortfolioResponse{}
 	unmarshal(body, rsp)
 
-	t.Logf("body:%+v, rsp:%+v", body, rsp)
+	t.Logf("%+v", body)
 	assert.Equal(t, 200, rsp.Code)
 }
 
@@ -58,7 +58,7 @@ func TestWalletBalance(t *testing.T) {
 	rsp := &WalletBalanceResponse{}
 	unmarshal(body, rsp)
 
-	t.Logf("%+v", rsp)
+	t.Logf("%+v", body)
 	assert.Equal(t, 200, rsp.Code)
 	assert.Equal(t, uint64(103266), rsp.CoinValue)
 }
@@ -83,7 +83,7 @@ func TestWalletTxs(t *testing.T) {
 	rsp := &WalletTxsResponse{}
 	unmarshal(body, rsp)
 
-	t.Logf("%+v", rsp.Txs)
+	t.Logf("%+v", body)
 	assert.Equal(t, 200, rsp.Code)
 	assert.Equal(t, 2, len(rsp.Txs))
 }
@@ -109,7 +109,7 @@ func TestAPIEcdsaNewAddress(t *testing.T) {
 		rsp := &EcdsaAddressResponse{}
 		unmarshal(body, rsp)
 
-		t.Logf("%+v", rsp)
+		t.Logf("%+v", body)
 		assert.Equal(t, 200, rsp.Code)
 	}
 }
@@ -135,7 +135,7 @@ func TestAPIWalletSendFees(t *testing.T) {
 		rsp := &WalletSendFeesResponse{}
 		unmarshal(body, rsp)
 
-		t.Logf("%+v", rsp)
+		t.Logf("%+v", body)
 		assert.Equal(t, 200, rsp.Code)
 	}
 }
@@ -161,7 +161,7 @@ func TestAPIWalletSend(t *testing.T) {
 		rsp := &WalletSendResponse{}
 		unmarshal(body, rsp)
 
-		t.Logf("%+v", rsp)
+		t.Logf("%+v", body)
 		assert.Equal(t, 200, rsp.Code)
 	}
 

@@ -32,6 +32,12 @@ func (r *response) writeError(err error) {
 	w.Write([]byte(err.Error()))
 }
 
+func (r *response) writeErrorWithStatus(status int, err error) {
+	w := r.w
+	w.WriteHeader(status)
+	w.Write([]byte(err.Error()))
+}
+
 func (r *response) writeJSON(thing interface{}) {
 	w := r.w
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")

@@ -72,8 +72,8 @@ func (h *Handler) ecdsaR2(w http.ResponseWriter, r *http.Request) {
 	req := &proto.EcdsaR2Request{}
 	err = json.NewDecoder(r.Body).Decode(req)
 	if err != nil {
-		_, _, _, _, _ = log.Error, uid, err, resp.writeError, err
-
+		log.Error("api.ecdsa.r2.req.decode.error:%+v", err)
+		resp.writeError(err)
 	}
 	log.Info("api.ecdsa.r2.req:%+v", req)
 

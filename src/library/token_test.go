@@ -22,7 +22,7 @@ func TestTokenAPIGetVCode(t *testing.T) {
 	body := APIGetVCode(ts.URL, mobile)
 	rsp := &VcodeResponse{}
 	unmarshal(body, rsp)
-	t.Logf("%+v", rsp)
+	t.Logf("%+v", body)
 	assert.Equal(t, 200, rsp.Code)
 }
 
@@ -34,6 +34,6 @@ func TestTokenAPIGetToken(t *testing.T) {
 	body := APIGetToken(ts.URL, mobile, "vcode", mockMasterPubKey)
 	rsp := &TokenResponse{}
 	unmarshal(body, rsp)
-	t.Logf("%+v", rsp)
+	t.Logf("%+v", body)
 	assert.Equal(t, 200, rsp.Code)
 }
