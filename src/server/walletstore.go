@@ -76,7 +76,7 @@ func (s *WalletStore) Open(dir string) error {
 			return err
 		}
 		s.wallets[wallet.UID] = wallet
-		log.Info("wallet.store.load[%v]", wallet.UID)
+		log.Info("wallet.store.load[%s/%v]", dir, wallet.UID)
 	}
 	return nil
 }

@@ -106,7 +106,7 @@ var (
 
 const (
 	mockUID             = "10086"
-	mockToken           = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkaWQiOiIiLCJtcGsiOiJ0cHViRDZOelZia3JZaFo0WHhoZWF1dXNicVpCQlJoVUFwU01OekJiTU1WSkJlR0plUlBwQVFRRWh4RWZDZUxmbVV5ZXQzRlhYeWJBb1doSjN1WmU0ZlF2cWdWQ2Q4VVBLWDhzUDRxQVhLRUhaR2siLCJuZXQiOiJ0ZXN0bmV0IiwidCI6MTU2MzAzMzc0MCwidWlkIjoiMTAwODYifQ.3gqSJBP4uXJ-P3DNlsZjSBrCCCM_Kp4vAZBJ7I7lc78"
+	mockToken           = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkaWQiOiIiLCJuZXQiOiJ0ZXN0bmV0IiwidCI6MTU2MzkzMTcyOCwidWlkIjoiMTAwODYifQ.cgjf4pox_MegQsr7ft4JzvANj18E73qV9rjmZuxLD1s"
 	mockSvrMasterPrvKey = "tprv8ZgxMBicQKsPfNhXDHV93ummM6rEzTmxHf96Mk3FnpgoaoNYPjfSCZyHFnFQnQDLAiMNsvJqEtvjCkvo5P3CPRHQx5GcZxPqRHy31q2oWXD"
 	mockCliMasterPrvKey = "tprv8ZgxMBicQKsPeVfrhGFHCRu4cQBY1VFSogap4qSzmNTuow93Y1aeXTco2Vdw41VLUvPC4e3X1ZF9uoJEeRbUpLR4DqtzvLd3AQnQobNaGA4"
 	mockCliMasterPubKey = "tpubD6NzVbkrYhZ4XxheauusbqZBBRhUApSMNzBbMMVJBeGJeRPpAQQEhxEfCeLfmUyet3FXXybAoWhJ3uZe4fQvqgVCd8UPKX8sP4qAXKEHZGk"
@@ -140,6 +140,7 @@ func MockServer() (*httptest.Server, func()) {
 	return ts, func() {
 		ts.Close()
 		router.Close()
+		os.RemoveAll(conf.DataDir)
 	}
 }
 

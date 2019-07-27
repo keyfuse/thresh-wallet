@@ -25,8 +25,7 @@ func TestEcdsaAddressHandler(t *testing.T) {
 	// Token.
 	{
 		req := &proto.TokenRequest{
-			UID:          mockUID,
-			MasterPubKey: mockCliMasterPubKey,
+			UID: mockUID,
 		}
 		httpRsp, err := proto.NewRequest().Post(ts.URL+"/api/token", req)
 		assert.Nil(t, err)
@@ -71,8 +70,7 @@ func TestEcdsaR2S2Handler(t *testing.T) {
 	// Token.
 	{
 		req := &proto.TokenRequest{
-			UID:          mockUID,
-			MasterPubKey: mockCliMasterPubKey,
+			UID: mockUID,
 		}
 
 		_, err := proto.NewRequest().Post(ts.URL+"/api/token", req)

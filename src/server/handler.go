@@ -17,12 +17,13 @@ import (
 
 // Handler --
 type Handler struct {
-	log       *xlog.Log
-	conf      *Config
-	wdb       *WalletDB
-	vcode     *Vcode
-	netprefix string
-	tokenAuth *jwtauth.JWTAuth
+	log        *xlog.Log
+	conf       *Config
+	wdb        *WalletDB
+	loginCode  *Vcode
+	backupCode *Vcode
+	netprefix  string
+	tokenAuth  *jwtauth.JWTAuth
 }
 
 // NewHandler -- creates new Handler.
@@ -35,15 +36,17 @@ func NewHandler(log *xlog.Log, conf *Config) *Handler {
 		netprefix = "xpub"
 	}
 	wdb := NewWalletDB(log, conf)
-	vcode := NewVcode(log, conf)
+	loginCode := NewVcode(log, conf)
+	backupCode := NewVcode(log, conf)
 	tokenAuth := jwtauth.New("HS256", []byte(conf.TokenSecret), nil)
 	handler := &Handler{
-		log:       log,
-		conf:      conf,
-		wdb:       wdb,
-		vcode:     vcode,
-		netprefix: netprefix,
-		tokenAuth: tokenAuth,
+		log:        log,
+		conf:       conf,
+		wdb:        wdb,
+		loginCode:  loginCode,
+		backupCode: backupCode,
+		netprefix:  netprefix,
+		tokenAuth:  tokenAuth,
 	}
 	return handler
 }
@@ -62,13 +65,13 @@ func (h *Handler) Close() {
 	wdb.Close()
 }
 
-func (h *Handler) userinfo(tag string, r *http.Request) (string, string, error) {
+func (h *Handler) userinfo(tag string, r *http.Request) (string, error) {
 	log := h.log
 
 	_, claims, err := jwtauth.FromContext(r.Context())
 	if err != nil {
 		log.Error("api.handler[%v].uid.jwtauth.error:%+v", tag, err)
-		return "", "", err
+		return "", err
 	}
-	return fmt.Sprintf("%v", claims["uid"]), fmt.Sprintf("%v", claims["mpk"]), nil
+	return fmt.Sprintf("%v", claims["uid"]), nil
 }

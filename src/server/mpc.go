@@ -11,6 +11,13 @@ import (
 	"math/big"
 	"strings"
 
+	"crypto"
+	"crypto/rsa"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/hex"
+	"encoding/pem"
+
 	"github.com/tokublock/tokucore/network"
 	"github.com/tokublock/tokucore/xcore"
 	"github.com/tokublock/tokucore/xcore/bip32"
@@ -108,4 +115,40 @@ func createSvrChildPubKey(pos uint32, svrMasterPrvKey string, net *network.Netwo
 		return "", err
 	}
 	return svrchild.HDPublicKey().ToString(net), nil
+}
+
+func rsaVerify(pubkeypem string, digestHex string, signatureHex string) error {
+	digest, err := hex.DecodeString(digestHex)
+	if err != nil {
+		return err
+	}
+
+	signature, err := hex.DecodeString(signatureHex)
+	if err != nil {
+		return err
+	}
+
+	block, _ := pem.Decode([]byte(pubkeypem))
+	if block == nil {
+		return fmt.Errorf("rsa.pubkey.pem.broken")
+	}
+	pubkey, err := x509.ParsePKCS1PublicKey(block.Bytes)
+	if err != nil {
+		return err
+	}
+	return rsa.VerifyPKCS1v15(pubkey, crypto.SHA256, digest, signature)
+}
+
+func verifyPubKey(masterpubkey string, signatureHex string) error {
+	hdpub, err := bip32.NewHDKeyFromString(masterpubkey)
+	if err != nil {
+		return err
+	}
+	signature, err := hex.DecodeString(signatureHex)
+	if err != nil {
+		return err
+	}
+
+	hash := sha256.Sum256([]byte(masterpubkey))
+	return xcrypto.EcdsaVerify(hdpub.PublicKey(), hash[:], signature)
 }

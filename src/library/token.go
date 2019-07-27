@@ -22,7 +22,7 @@ type VcodeResponse struct {
 func APIGetVCode(url string, uid string) string {
 	rsp := &VcodeResponse{}
 	rsp.Code = http.StatusOK
-	path := fmt.Sprintf("%s/api/vcode", url)
+	path := fmt.Sprintf("%s/api/login/vcode", url)
 
 	req := &proto.VCodeRequest{
 		UID: uid,
@@ -45,15 +45,14 @@ type TokenResponse struct {
 }
 
 // APIGetToken -- get token api.
-func APIGetToken(url string, uid string, vcode string, masterPubKey string) string {
+func APIGetToken(url string, uid string, vcode string) string {
 	rsp := &TokenResponse{}
 	rsp.Code = http.StatusOK
-	path := fmt.Sprintf("%s/api/token", url)
+	path := fmt.Sprintf("%s/api/login/token", url)
 
 	req := &proto.TokenRequest{
-		UID:          uid,
-		VCode:        vcode,
-		MasterPubKey: masterPubKey,
+		UID:   uid,
+		VCode: vcode,
 	}
 	httpRsp, err := proto.NewRequest().Post(path, req)
 	if err != nil {

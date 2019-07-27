@@ -14,6 +14,56 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestWalletCheck(t *testing.T) {
+	var token string
+
+	ts, cleanup := server.MockServer()
+	defer cleanup()
+
+	mobile := "10096"
+	// Token.
+	{
+		body := APIGetToken(ts.URL, mobile, "vcode")
+		rsp := &TokenResponse{}
+		unmarshal(body, rsp)
+		assert.Equal(t, 200, rsp.Code)
+		token = rsp.Token
+	}
+
+	body := APIWalletCheck(ts.URL, token)
+	rsp := &WalletCheckResponse{}
+	unmarshal(body, rsp)
+
+	t.Logf("%+v", body)
+	assert.Equal(t, 200, rsp.Code)
+	assert.False(t, rsp.UserExists)
+	assert.False(t, rsp.BackupExists)
+}
+
+func TestWalletCreate(t *testing.T) {
+	var token string
+
+	ts, cleanup := server.MockServer()
+	defer cleanup()
+
+	mobile := "10096"
+	// Token.
+	{
+		body := APIGetToken(ts.URL, mobile, "vcode")
+		rsp := &TokenResponse{}
+		unmarshal(body, rsp)
+		assert.Equal(t, 200, rsp.Code)
+		token = rsp.Token
+	}
+
+	body := APIWalletCreate(ts.URL, token, mockMasterPrvKey, mockMasterPubKey)
+	rsp := &WalletCreateResponse{}
+	unmarshal(body, rsp)
+
+	t.Logf("%+v", body)
+	assert.Equal(t, 200, rsp.Code)
+}
+
 func TestWalletPortfolio(t *testing.T) {
 	var token string
 
@@ -23,7 +73,7 @@ func TestWalletPortfolio(t *testing.T) {
 	mobile := "10086"
 	// Token.
 	{
-		body := APIGetToken(ts.URL, mobile, "vcode", mockMasterPubKey)
+		body := APIGetToken(ts.URL, mobile, "vcode")
 		rsp := &TokenResponse{}
 		unmarshal(body, rsp)
 		assert.Equal(t, 200, rsp.Code)
@@ -47,7 +97,7 @@ func TestWalletBalance(t *testing.T) {
 	mobile := "10086"
 	// Token.
 	{
-		body := APIGetToken(ts.URL, mobile, "vcode", mockMasterPubKey)
+		body := APIGetToken(ts.URL, mobile, "vcode")
 		rsp := &TokenResponse{}
 		unmarshal(body, rsp)
 		assert.Equal(t, 200, rsp.Code)
@@ -72,7 +122,7 @@ func TestWalletTxs(t *testing.T) {
 	mobile := "10086"
 	// Token.
 	{
-		body := APIGetToken(ts.URL, mobile, "vcode", mockMasterPubKey)
+		body := APIGetToken(ts.URL, mobile, "vcode")
 		rsp := &TokenResponse{}
 		unmarshal(body, rsp)
 		assert.Equal(t, 200, rsp.Code)
@@ -97,7 +147,7 @@ func TestAPIEcdsaNewAddress(t *testing.T) {
 	mobile := "10086"
 	// Token.
 	{
-		body := APIGetToken(ts.URL, mobile, "vcode", mockMasterPubKey)
+		body := APIGetToken(ts.URL, mobile, "vcode")
 		rsp := &TokenResponse{}
 		unmarshal(body, rsp)
 		assert.Equal(t, 200, rsp.Code)
@@ -123,7 +173,7 @@ func TestAPIWalletSendFees(t *testing.T) {
 	mobile := "10086"
 	// Token.
 	{
-		body := APIGetToken(ts.URL, mobile, "vcode", mockMasterPubKey)
+		body := APIGetToken(ts.URL, mobile, "vcode")
 		rsp := &TokenResponse{}
 		unmarshal(body, rsp)
 		assert.Equal(t, 200, rsp.Code)
@@ -149,7 +199,7 @@ func TestAPIWalletSend(t *testing.T) {
 	mobile := "10086"
 	// Token.
 	{
-		body := APIGetToken(ts.URL, mobile, "vcode", mockMasterPubKey)
+		body := APIGetToken(ts.URL, mobile, "vcode")
 		rsp := &TokenResponse{}
 		unmarshal(body, rsp)
 		assert.Equal(t, 200, rsp.Code)

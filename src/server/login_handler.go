@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"math/rand"
 	"net/http"
-	"strings"
 	"time"
 
 	"proto"
@@ -19,9 +18,9 @@ import (
 	jwt "github.com/dgrijalva/jwt-go"
 )
 
-func (h *Handler) vcodefn(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) loginVCode(w http.ResponseWriter, r *http.Request) {
 	log := h.log
-	vcode := h.vcode
+	vcode := h.loginCode
 	resp := newResponse(log, w)
 
 	// Request.
@@ -40,11 +39,10 @@ func (h *Handler) vcodefn(w http.ResponseWriter, r *http.Request) {
 	log.Info("api.vcode.resp:[uid:%v, vcode:%v]", req.UID, code)
 }
 
-func (h *Handler) tokenfn(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) loginToken(w http.ResponseWriter, r *http.Request) {
 	log := h.log
-	wdb := h.wdb
 	conf := h.conf
-	vcode := h.vcode
+	vcode := h.loginCode
 	resp := newResponse(log, w)
 	tokenAuth := h.tokenAuth
 
@@ -68,23 +66,8 @@ func (h *Handler) tokenfn(w http.ResponseWriter, r *http.Request) {
 		vcode.Remove(req.UID)
 	}
 
-	// Check chainnet.
-	if !strings.HasPrefix(req.MasterPubKey, h.netprefix) {
-		log.Error("api.token.req.masterpubkey[%v].chainnet.error.server:%s", req.MasterPubKey, h.netprefix)
-		resp.writeError(fmt.Errorf("chainnet.error.server.is:%v", h.netprefix))
-		return
-	}
-
-	// Check wallet.
-	_, err = wdb.OpenUIDWallet(req.UID, req.MasterPubKey)
-	if err != nil {
-		log.Error("api.token.open.wallet.error:%+v", err)
-		resp.writeError(err)
-		return
-	}
-
 	// Make token.
-	_, token, err := tokenAuth.Encode(jwt.MapClaims{"uid": req.UID, "mpk": req.MasterPubKey, "did": req.DeviceID, "t": time.Now().Unix(), "net": conf.ChainNet})
+	_, token, err := tokenAuth.Encode(jwt.MapClaims{"uid": req.UID, "did": req.DeviceID, "t": time.Now().Unix(), "net": conf.ChainNet})
 	if err != nil {
 		log.Error("api.token[%+v].error:%+v", req, err)
 		resp.writeError(err)

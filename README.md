@@ -49,6 +49,14 @@ $ make buildandroid
 +------------------+----------------------------------------+---------------------------------------------------------------------+
 | gettoken         | gettoken <vcode>                       | gettoken 666888                                                     |
 +------------------+----------------------------------------+---------------------------------------------------------------------+
+| checkwallet      | checkwallet                            | checkwallet                                                         |
++------------------+----------------------------------------+---------------------------------------------------------------------+
+| createwallet     | createwallet                           | createwallet                                                        |
++------------------+----------------------------------------+---------------------------------------------------------------------+
+| backupwallet     | backupwallet                           | backupwallet                                                        |
++------------------+----------------------------------------+---------------------------------------------------------------------+
+| recoverwallet    | recoverwallet                          | recoverwallet                                                       |
++------------------+----------------------------------------+---------------------------------------------------------------------+
 | getbalance       | getbalance                             | getbalance                                                          |
 +------------------+----------------------------------------+---------------------------------------------------------------------+
 | gettxs           | gettxs                                 | gettxs                                                              |
@@ -61,7 +69,7 @@ $ make buildandroid
 +------------------+----------------------------------------+---------------------------------------------------------------------+
 | sendalltoaddress | sendalltoaddress <address>             | sendalltoaddress tb1qsdp08c4uua6ya865mmxvsqeqlv3gzp2lv5jtsw         |
 +------------------+----------------------------------------+---------------------------------------------------------------------+
-(9 rows)
+(13 rows)
 threshwallet@testnet> gettoken xx
 +--------+
 | status |
@@ -69,39 +77,81 @@ threshwallet@testnet> gettoken xx
 | OK     |
 +--------+
 (1 rows)
+threshwallet@testnet> checkwallet
++-------------+---------------+
+| user_exists | backup_exists |
++-------------+---------------+
+| false       | false         |
++-------------+---------------+
+(1 rows)
+threshwallet@testnet> createwallet
++--------+
+| status |
++--------+
+| OK     |
++--------+
+(1 rows)
+threshwallet@testnet> checkwallet
++-------------+---------------+
+| user_exists | backup_exists |
++-------------+---------------+
+| true        | false         |
++-------------+---------------+
+(1 rows)
+threshwallet@testnet> backupwallet
++--------+
+| status |
++--------+
+| OK     |
++--------+
+(1 rows)
+threshwallet@testnet> checkwallet
++-------------+---------------+
+| user_exists | backup_exists |
++-------------+---------------+
+| true        | true          |
++-------------+---------------+
+(1 rows)
 threshwallet@testnet> getnewaddress
 +--------------------------------------------+---------+
 |                  address                   | postion |
 +--------------------------------------------+---------+
-| tb1qv8v4grqqvjuhwmn6xk9wnkdk7gem8m0uua4w62 |       0 |
+| tb1qzg2p5je5z82elv3k08lzpyjcwv9830he0qt4c7 |       0 |
 +--------------------------------------------+---------+
 (1 rows)
 threshwallet@testnet> getbalance
 +-----------------+
 | current_balance |
 +-----------------+
-|         7055957 |
+|               0 |
++-----------------+
+(1 rows)
+threshwallet@testnet> getbalance
++-----------------+
+| current_balance |
++-----------------+
+|         1000000 |
 +-----------------+
 (1 rows)
 threshwallet@testnet> getnewaddress
 +--------------------------------------------+---------+
 |                  address                   | postion |
 +--------------------------------------------+---------+
-| tb1qalf2fk6g3xva2pxhzvgfy37009nd47tvdn57cv |       1 |
+| tb1qx0ehpa5a7ld2mhv99nkvzpsx343ap7aqhmtca0 |       1 |
 +--------------------------------------------+---------+
 (1 rows)
-threshwallet@testnet> sendalltoaddress tb1qalf2fk6g3xva2pxhzvgfy37009nd47tvdn57cv
+threshwallet@testnet> sendalltoaddress tb1qx0ehpa5a7ld2mhv99nkvzpsx343ap7aqhmtca0
 +--------------------------------------------+------------+-----------+------------------------------------------------------------------+
 |                 toaddress                  | value(sat) | fees(sat) |                               txid                               |
 +--------------------------------------------+------------+-----------+------------------------------------------------------------------+
-| tb1qalf2fk6g3xva2pxhzvgfy37009nd47tvdn57cv |    7055732 |       225 | 61cb003e443d1c48eb4ab1bfea98101a5e6f1488ebdac4c00371a7853c8d516b |
+| tb1qx0ehpa5a7ld2mhv99nkvzpsx343ap7aqhmtca0 |     999775 |       225 | 1d73d5e424b3fce1b7d5fb221e069a52929276cd1eaec8d6ed1a4295a17149c4 |
 +--------------------------------------------+------------+-----------+------------------------------------------------------------------+
 (1 rows)
 threshwallet@testnet> getbalance
 +-----------------+
 | current_balance |
 +-----------------+
-|         7055732 |
+|          999775 |
 +-----------------+
 (1 rows)
 threshwallet@testnet>
@@ -115,5 +165,3 @@ thresh-wallet is released under the GPLv3 License.
 ## References
 
 [1] Y. Lindell. [Fast Secure Two-Party ECDSA Signing](https://eprint.iacr.org/2017/552.pdf)
-
-[2] [Bitcoin testnet3 faucet](https://coinfaucet.eu/en/btc-testnet/)

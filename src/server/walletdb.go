@@ -9,6 +9,7 @@ package server
 import (
 	"fmt"
 	"sync"
+	"time"
 
 	"xlog"
 
@@ -87,18 +88,8 @@ func (wdb *WalletDB) Close() {
 	wdb.syncer.Stop()
 }
 
-func (wdb *WalletDB) check(uid string, walletMasterPubKey string, cliMasterPubKey string) error {
-	log := wdb.log
-
-	if walletMasterPubKey != cliMasterPubKey {
-		log.Error("wdb.openwallet[%v].check.wallet.invalid.req.climasterpubkey:%v, svr.climasterpubkey:%v", uid, cliMasterPubKey, walletMasterPubKey)
-		return fmt.Errorf("wdb.uid[%v].req.masterpubkey[%v].invalid", uid, cliMasterPubKey)
-	}
-	return nil
-}
-
-// OpenUIDWallet -- used to open(or create if not exists) a wallet file.
-func (wdb *WalletDB) OpenUIDWallet(uid string, cliMasterPubKey string) (*Wallet, error) {
+// CreateWallet -- used to create a wallet file.
+func (wdb *WalletDB) CreateWallet(uid string, cliMasterPubKey string) error {
 	net := wdb.net
 	store := wdb.store
 
@@ -106,7 +97,7 @@ func (wdb *WalletDB) OpenUIDWallet(uid string, cliMasterPubKey string) (*Wallet,
 	if wallet == nil {
 		masterKey, err := bip32.NewHDKeyRand()
 		if err != nil {
-			return nil, err
+			return err
 		}
 		svrMasterPrvKey := masterKey.ToString(net)
 		wallet = &Wallet{
@@ -116,29 +107,20 @@ func (wdb *WalletDB) OpenUIDWallet(uid string, cliMasterPubKey string) (*Wallet,
 			CliMasterPubKey: cliMasterPubKey,
 			SvrMasterPrvKey: svrMasterPrvKey,
 		}
-		return wallet, store.Write(wallet)
+		return store.Write(wallet)
+	} else {
+		return fmt.Errorf("wdb.wallet[%v, %v].create.error:wallet.exists", uid, cliMasterPubKey)
 	}
-
-	// Check.
-	if err := wdb.check(uid, wallet.CliMasterPubKey, cliMasterPubKey); err != nil {
-		return nil, err
-	}
-	return wallet, nil
 }
 
 // NewAddress -- used to generate new address of this uid.
-func (wdb *WalletDB) NewAddress(uid string, cliMasterPubKey string, typ string) (*Address, error) {
+func (wdb *WalletDB) NewAddress(uid string, typ string) (*Address, error) {
 	store := wdb.store
 
 	// Get wallet.
 	wallet := store.Get(uid)
 	if wallet == nil {
 		return nil, fmt.Errorf("wdb.newaddress.uid[%v].cant.found", uid)
-	}
-
-	// Check.
-	if err := wdb.check(uid, wallet.CliMasterPubKey, cliMasterPubKey); err != nil {
-		return nil, err
 	}
 
 	address, err := wallet.NewAddress(typ)
@@ -153,7 +135,7 @@ func (wdb *WalletDB) NewAddress(uid string, cliMasterPubKey string, typ string) 
 	return address, nil
 }
 
-func (wdb *WalletDB) MasterPrvKey(uid string, cliMasterPubKey string) (string, error) {
+func (wdb *WalletDB) MasterPrvKey(uid string) (string, error) {
 	store := wdb.store
 
 	// Get wallet.
@@ -162,11 +144,13 @@ func (wdb *WalletDB) MasterPrvKey(uid string, cliMasterPubKey string) (string, e
 		return "", fmt.Errorf("wdb.master.prvkey.uid[%v].cant.found", uid)
 	}
 
-	// Check.
-	if err := wdb.check(uid, wallet.CliMasterPubKey, cliMasterPubKey); err != nil {
-		return "", err
-	}
 	return wallet.SvrMasterPrvKey, nil
+}
+
+// Wallet -- used to get the wallet.
+func (wdb *WalletDB) Wallet(uid string) *Wallet {
+	store := wdb.store
+	return store.Get(uid)
 }
 
 // Balance --used to return balance of the wallet.
@@ -224,4 +208,34 @@ func (wdb *WalletDB) SendFees(uid string, priority string, sendAmount uint64) (*
 
 	feesperkb := store.FeesPerKB(priority)
 	return wallet.SendFees(sendAmount, feesperkb)
+}
+
+func (wdb *WalletDB) StoreBackup(uid string, email string, did string, cloudService string, encryptedPrvKey string, encryptionPubKey string) error {
+	store := wdb.store
+
+	// Get wallet.
+	wallet := store.Get(uid)
+	if wallet == nil {
+		return fmt.Errorf("wdb.store.backup.uid[%v].cant.found", uid)
+	}
+	wallet.Lock()
+	wallet.Backup.Email = email
+	wallet.Backup.DeviceID = did
+	wallet.Backup.CloudService = cloudService
+	wallet.Backup.EncryptedPrvKey = encryptedPrvKey
+	wallet.Backup.EncryptionPubKey = encryptionPubKey
+	wallet.Backup.Time = time.Now().Unix()
+	wallet.Unlock()
+	return store.Write(wallet)
+}
+
+func (wdb *WalletDB) GetBackup(uid string) (Backup, error) {
+	store := wdb.store
+
+	// Get wallet.
+	wallet := store.Get(uid)
+	if wallet == nil {
+		return Backup{}, fmt.Errorf("wdb.backup.pubkey.uid[%v].cant.found", uid)
+	}
+	return wallet.Backup, nil
 }

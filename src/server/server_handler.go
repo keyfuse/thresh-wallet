@@ -13,7 +13,7 @@ import (
 	"proto"
 )
 
-func (h *Handler) info(w http.ResponseWriter, r *http.Request) {
+func (h *Handler) serverInfo(w http.ResponseWriter, r *http.Request) {
 	conf := h.conf
 	log := h.log
 

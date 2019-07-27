@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestVCodeHandler(t *testing.T) {
+func TestLoginVCodeHandler(t *testing.T) {
 	ts, cleanup := MockServer()
 	defer cleanup()
 
@@ -23,24 +23,23 @@ func TestVCodeHandler(t *testing.T) {
 		req := &proto.VCodeRequest{
 			UID: mockUID,
 		}
-		httpRsp, err := proto.NewRequest().Post(ts.URL+"/api/vcode", req)
+		httpRsp, err := proto.NewRequest().Post(ts.URL+"/api/login/vcode", req)
 		assert.Nil(t, err)
 		assert.Equal(t, 200, httpRsp.StatusCode())
 	}
 }
 
-func TestTokenHandler(t *testing.T) {
+func TestLoginTokenHandler(t *testing.T) {
 	ts, cleanup := MockServer()
 	defer cleanup()
 
 	// OK.
 	{
 		req := &proto.TokenRequest{
-			UID:          mockUID,
-			MasterPubKey: mockCliMasterPubKey,
+			UID: mockUID,
 		}
 
-		httpRsp, err := proto.NewRequest().Post(ts.URL+"/api/token", req)
+		httpRsp, err := proto.NewRequest().Post(ts.URL+"/api/login/token", req)
 		assert.Nil(t, err)
 		rsp := &proto.TokenResponse{}
 		httpRsp.Json(rsp)

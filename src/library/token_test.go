@@ -31,7 +31,7 @@ func TestTokenAPIGetToken(t *testing.T) {
 	defer cleanup()
 
 	mobile := "10086"
-	body := APIGetToken(ts.URL, mobile, "vcode", mockMasterPubKey)
+	body := APIGetToken(ts.URL, mobile, "vcode")
 	rsp := &TokenResponse{}
 	unmarshal(body, rsp)
 	t.Logf("%+v", body)

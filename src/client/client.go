@@ -19,6 +19,8 @@ type Client struct {
 	uid          string
 	token        string
 	apiurl       string
+	rsaPrvKey    string
+	rsaPubKey    string
 	masterPrvKey string
 	masterPubKey string
 }
@@ -47,27 +49,17 @@ func NewClient(apiurl string, uid string, chainnet string, masterPrvKey string) 
 
 	// Key.
 	{
-		if mkprvkey == "" {
-			body := library.NewMasterPrvKey(net)
-			rsp := &library.MasterPrvKeyResponse{}
+		if mkprvkey != "" {
+			body := library.GetMasterPubKey(net, mkprvkey)
+			rsp := &library.MasterPubKeyResponse{}
 			if err := unmarshal(body, rsp); err != nil {
 				panic(err)
 			}
 			if rsp.Code != 200 {
 				panic(rsp.Message)
 			}
-			mkprvkey = rsp.MasterPrvKey
+			mkpubkey = rsp.MasterPubKey
 		}
-
-		body := library.GetMasterPubKey(net, mkprvkey)
-		rsp := &library.MasterPubKeyResponse{}
-		if err := unmarshal(body, rsp); err != nil {
-			panic(err)
-		}
-		if rsp.Code != 200 {
-			panic(rsp.Message)
-		}
-		mkpubkey = rsp.MasterPubKey
 	}
 
 	// Help action.
@@ -88,6 +80,10 @@ func (cli *Client) Start() {
 	f.AddAction(*helpAction(cli))
 	f.AddAction(*dumpKeyAction(cli))
 	f.AddAction(*tokenAction(cli))
+	f.AddAction(*walletCheckAction(cli))
+	f.AddAction(*walletCreateAction(cli))
+	f.AddAction(*walletBackupAction(cli))
+	f.AddAction(*walletRecoverAction(cli))
 	f.AddAction(*walletBalanceAction(cli))
 	f.AddAction(*walletTxsAction(cli))
 	f.AddAction(*walletNewAddressAction(cli))

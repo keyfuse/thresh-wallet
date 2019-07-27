@@ -31,5 +31,4 @@ func TestHttp(t *testing.T) {
 		time := rsp.Cost()
 		t.Log(time)
 	}
-
 }

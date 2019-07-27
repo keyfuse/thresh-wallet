@@ -7,12 +7,110 @@
 package server
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"testing"
 
 	"proto"
 
+	"github.com/tokublock/tokucore/network"
+	"github.com/tokublock/tokucore/xcore/bip32"
+	"github.com/tokublock/tokucore/xcrypto"
+
 	"github.com/stretchr/testify/assert"
 )
+
+func TestWalletCheck(t *testing.T) {
+	ts, cleanup := MockServer()
+	defer cleanup()
+
+	// Check.
+	{
+		req := &proto.WalletCheckRequest{}
+		httpRsp, err := proto.NewRequest().SetHeaders("Authorization", mockToken).Post(ts.URL+"/api/wallet/check", req)
+		assert.Nil(t, err)
+		assert.Equal(t, 200, httpRsp.StatusCode())
+
+		rsp := proto.WalletCheckResponse{}
+		httpRsp.Json(&rsp)
+		t.Logf("%v", rsp)
+	}
+}
+
+func TestWalletCreate(t *testing.T) {
+	ts, cleanup := MockServer()
+	defer cleanup()
+
+	var token string
+	var signature string
+	var masterpubkeywif string
+	// Token.
+	{
+		req := &proto.TokenRequest{
+			UID: "138888",
+		}
+
+		httpRsp, err := proto.NewRequest().Post(ts.URL+"/api/login/token", req)
+		assert.Nil(t, err)
+		assert.Equal(t, 200, httpRsp.StatusCode())
+
+		rsp := &proto.TokenResponse{}
+		httpRsp.Json(rsp)
+		token = rsp.Token
+	}
+
+	{
+		hdkey, err := bip32.NewHDKeyRand()
+		assert.Nil(t, err)
+		pub := hdkey.HDPublicKey()
+		masterpubkeywif = pub.ToString(network.TestNet)
+		hash := sha256.Sum256([]byte(masterpubkeywif))
+		sig, err := xcrypto.EcdsaSign(hdkey.PrivateKey(), hash[:])
+		assert.Nil(t, err)
+		signature = fmt.Sprintf("%x", sig)
+	}
+
+	// Create signature err.
+	{
+		req := &proto.WalletCreateRequest{
+			Signature:    "16" + signature[2:],
+			MasterPubKey: masterpubkeywif,
+		}
+		httpRsp, err := proto.NewRequest().SetHeaders("Authorization", token).Post(ts.URL+"/api/wallet/create", req)
+		assert.Nil(t, err)
+		assert.Equal(t, 400, httpRsp.StatusCode())
+
+		rsp := proto.WalletCreateResponse{}
+		httpRsp.Json(&rsp)
+		t.Logf("%v", rsp)
+	}
+
+	// Create ok.
+	{
+		req := &proto.WalletCreateRequest{
+			Signature:    signature,
+			MasterPubKey: masterpubkeywif,
+		}
+		httpRsp, err := proto.NewRequest().SetHeaders("Authorization", token).Post(ts.URL+"/api/wallet/create", req)
+		assert.Nil(t, err)
+		assert.Equal(t, 200, httpRsp.StatusCode())
+
+		rsp := proto.WalletCreateResponse{}
+		httpRsp.Json(&rsp)
+		t.Logf("%v", rsp)
+	}
+
+	// Create exists error.
+	{
+		req := &proto.WalletCreateRequest{
+			Signature:    signature,
+			MasterPubKey: masterpubkeywif,
+		}
+		httpRsp, err := proto.NewRequest().SetHeaders("Authorization", token).Post(ts.URL+"/api/wallet/create", req)
+		assert.Nil(t, err)
+		assert.Equal(t, 500, httpRsp.StatusCode())
+	}
+}
 
 func TestWalletBalance(t *testing.T) {
 	ts, cleanup := MockServer()

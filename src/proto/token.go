@@ -13,10 +13,9 @@ type VCodeRequest struct {
 
 // TokenRequest --
 type TokenRequest struct {
-	UID          string `json:"uid"`
-	VCode        string `json:"vcode"`
-	DeviceID     string `json:"deviceid"`
-	MasterPubKey string `json:"masterpubkey"`
+	UID      string `json:"uid"`
+	VCode    string `json:"vcode"`
+	DeviceID string `json:"deviceid"`
 }
 
 // TokenResponse --

@@ -44,10 +44,9 @@ func NewAPIRouter(log *xlog.Log, conf *Config) APIMux {
 		lmt.SetMessage("You have reached maximum request limit.")
 		r.Use(tollbooth_chi.LimitHandler(lmt))
 
-		r.Get("/api/ping", handler.ping)
-		r.Get("/api/server/info", handler.info)
-		r.Post("/api/vcode", handler.vcodefn)
-		r.Post("/api/token", handler.tokenfn)
+		r.Get("/api/server/info", handler.serverInfo)
+		r.Post("/api/login/vcode", handler.loginVCode)
+		r.Post("/api/login/token", handler.loginToken)
 	})
 
 	router.Group(func(r chi.Router) {
@@ -61,6 +60,8 @@ func NewAPIRouter(log *xlog.Log, conf *Config) APIMux {
 
 		// Wallet.
 		r.Post("/api/wallet/txs", handler.walletTxs)
+		r.Post("/api/wallet/check", handler.walletCheck)
+		r.Post("/api/wallet/create", handler.walletCreate)
 		r.Post("/api/wallet/pushtx", handler.walletPushTx)
 		r.Post("/api/wallet/balance", handler.walletBalance)
 		r.Post("/api/wallet/unspent", handler.walletUnspent)
@@ -73,8 +74,9 @@ func NewAPIRouter(log *xlog.Log, conf *Config) APIMux {
 		r.Post("/api/ecdsa/newaddress", handler.ecdsaNewAddress)
 
 		// Backup.
-		r.Post("/api/backup/verify", handler.backupVerify)
+		r.Post("/api/backup/vcode", handler.backupVCode)
 		r.Post("/api/backup/store", handler.backupStore)
+		r.Post("/api/backup/restore", handler.backupRestore)
 	})
 	return APIMux{router, handler}
 }

@@ -9,11 +9,13 @@ build:
 
 buildosx:
 	@echo "--> Building osx library..."
+	go get -v golang.org/x/mobile/cmd/gobind
 	go get -v golang.org/x/mobile/cmd/gomobile
 	./bin/gomobile bind -target=ios library
 
 buildandroid:
 	@echo "--> Building android library..."
+	go get -v golang.org/x/mobile/cmd/gobind
 	go get -v golang.org/x/mobile/cmd/gomobile
 	./bin/gomobile bind -target=android library
 

@@ -13,14 +13,101 @@ import (
 	"proto"
 )
 
+func (h *Handler) walletCheck(w http.ResponseWriter, r *http.Request) {
+	var userExists bool
+	var backupExists bool
+	var backupTimestamp int64
+	var backupCloudService string
+
+	log := h.log
+	wdb := h.wdb
+	resp := newResponse(log, w)
+
+	// UID.
+	uid, err := h.userinfo("walletCheck", r)
+	if err != nil {
+		log.Error("api.wallet.check.uid.error:%+v", err)
+		resp.writeError(err)
+		return
+	}
+
+	// Request.
+	req := &proto.WalletCheckRequest{}
+	err = json.NewDecoder(r.Body).Decode(req)
+	if err != nil {
+		log.Error("api.wallet[%v].check.decode.body.error:%+v", uid, err)
+		resp.writeError(err)
+		return
+	}
+	log.Info("api.wallet.check.req:%+v", req)
+
+	wallet := wdb.Wallet(uid)
+	if wallet != nil {
+		userExists = true
+		backupExists = (wallet.Backup.EncryptedPrvKey != "")
+		backupTimestamp = wallet.Backup.Time
+		backupCloudService = wallet.Backup.CloudService
+	}
+	// Response.
+	rsp := proto.WalletCheckResponse{
+		UserExists:         userExists,
+		BackupExists:       backupExists,
+		BackupTimestamp:    backupTimestamp,
+		BackupCloudService: backupCloudService,
+	}
+	log.Info("api.wallet.check.rsp:%+v", rsp)
+	resp.writeJSON(rsp)
+}
+
+func (h *Handler) walletCreate(w http.ResponseWriter, r *http.Request) {
+	log := h.log
+	wdb := h.wdb
+	resp := newResponse(log, w)
+
+	// UID.
+	uid, err := h.userinfo("walletCreate", r)
+	if err != nil {
+		log.Error("api.wallet.create.uid.error:%+v", err)
+		resp.writeError(err)
+		return
+	}
+
+	// Request.
+	req := &proto.WalletCreateRequest{}
+	err = json.NewDecoder(r.Body).Decode(req)
+	if err != nil {
+		log.Error("api.wallet[%v].create.decode.body.error:%+v", uid, err)
+		resp.writeError(err)
+		return
+	}
+	log.Info("api.wallet.create.req:%+v", req)
+
+	// Verify the pub/prv key pairing.
+	if err := verifyPubKey(req.MasterPubKey, req.Signature); err != nil {
+		log.Error("api.wallet[%v].create.verify.pubkey.error:%+v", uid, err)
+		resp.writeErrorWithStatus(400, err)
+		return
+	}
+
+	// Create wallet.
+	if err := wdb.CreateWallet(uid, req.MasterPubKey); err != nil {
+		log.Error("api.wallet[%v].wdb.create.error:%+v", uid, err)
+		resp.writeError(err)
+		return
+	}
+	// Response.
+	rsp := proto.WalletCreateResponse{}
+	log.Info("api.wallet.create.rsp:%+v", rsp)
+	resp.writeJSON(rsp)
+}
+
 func (h *Handler) walletBalance(w http.ResponseWriter, r *http.Request) {
 	log := h.log
 	wdb := h.wdb
 	resp := newResponse(log, w)
-	log.Info("api.wallet.balance.req")
 
 	// UID.
-	uid, _, err := h.userinfo("walletBalance", r)
+	uid, err := h.userinfo("walletBalance", r)
 	if err != nil {
 		log.Error("api.wallet.balance.uid.error:%+v", err)
 		resp.writeError(err)
@@ -58,7 +145,7 @@ func (h *Handler) walletUnspent(w http.ResponseWriter, r *http.Request) {
 	resp := newResponse(log, w)
 
 	// UID.
-	uid, _, err := h.userinfo("walletUnspent", r)
+	uid, err := h.userinfo("walletUnspent", r)
 	if err != nil {
 		log.Error("api.wallet.unspent.uid.error:%+v", err)
 		resp.writeError(err)
@@ -105,7 +192,7 @@ func (h *Handler) walletTxs(w http.ResponseWriter, r *http.Request) {
 	resp := newResponse(log, w)
 
 	// UID.
-	uid, _, err := h.userinfo("walletTxs", r)
+	uid, err := h.userinfo("walletTxs", r)
 	if err != nil {
 		log.Error("api.wallet.txs.uid.error:%+v", err)
 		resp.writeError(err)
@@ -154,7 +241,7 @@ func (h *Handler) walletSendFees(w http.ResponseWriter, r *http.Request) {
 	resp := newResponse(log, w)
 
 	// UID.
-	uid, _, err := h.userinfo("walletSendFees", r)
+	uid, err := h.userinfo("walletSendFees", r)
 	if err != nil {
 		log.Error("api.wallet.send.fees.uid.error:%+v", err)
 		resp.writeError(err)
@@ -194,7 +281,7 @@ func (h *Handler) walletPortfolio(w http.ResponseWriter, r *http.Request) {
 	code := "CNY"
 
 	// UID.
-	uid, _, err := h.userinfo("walletPortfolio", r)
+	uid, err := h.userinfo("walletPortfolio", r)
 	if err != nil {
 		log.Error("api.wallet.portfolio.uid.error:%+v", err)
 		resp.writeError(err)
@@ -236,7 +323,7 @@ func (h *Handler) walletPushTx(w http.ResponseWriter, r *http.Request) {
 	resp := newResponse(log, w)
 
 	// UID.
-	uid, _, err := h.userinfo("walletPushTx", r)
+	uid, err := h.userinfo("walletPushTx", r)
 	if err != nil {
 		log.Error("api.wallet.push.tx.uid.error:%+v", err)
 		resp.writeError(err)

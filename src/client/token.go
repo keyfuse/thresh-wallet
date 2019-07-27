@@ -27,7 +27,7 @@ func tokenAction(cli *Client) *action.Action {
 		// Get token.
 		{
 			rsp := &library.TokenResponse{}
-			body := library.APIGetToken(cli.apiurl, cli.uid, args[0].(string), cli.masterPubKey)
+			body := library.APIGetToken(cli.apiurl, cli.uid, args[0].(string))
 			if err := unmarshal(body, rsp); err != nil {
 				rows = append(rows, []string{err.Error()})
 				PrintQueryOutput(columns, rows)

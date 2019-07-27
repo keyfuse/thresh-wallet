@@ -6,6 +6,28 @@
 
 package proto
 
+// WalletCheckRequest --
+type WalletCheckRequest struct {
+}
+
+// WalletCheckResponse --
+type WalletCheckResponse struct {
+	UserExists         bool   `json:"user_exists"`
+	BackupExists       bool   `json:"backup_exists"`
+	BackupTimestamp    int64  `json:"backup_timestamp"`
+	BackupCloudService string `json:"backup_cloudservice"`
+}
+
+// WalletCreateRequest --
+type WalletCreateRequest struct {
+	Signature    string `json:"signature"`
+	MasterPubKey string `json:"masterpubkey"`
+}
+
+// WalletCreateResponse --
+type WalletCreateResponse struct {
+}
+
 // WalletPortfolioRequest --
 type WalletPortfolioRequest struct {
 	Code string `json:"code"`

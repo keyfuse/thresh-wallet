@@ -7,6 +7,7 @@
 package library
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"net/http"
 	"strings"
@@ -19,6 +20,92 @@ import (
 	"github.com/tokublock/tokucore/xcrypto"
 	"github.com/tokublock/tokucore/xcrypto/secp256k1"
 )
+
+// WalletCheckResponse --
+type WalletCheckResponse struct {
+	Status
+	UserExists         bool   `json:"user_exists"`
+	BackupExists       bool   `json:"backup_exists"`
+	BackupTimestamp    int64  `json:"backup_timestamp"`
+	BackupCloudService string `json:"backup_cloudservice"`
+}
+
+// APIWalletCheck -- check the user/backup exists.
+func APIWalletCheck(url string, token string) string {
+	rsp := &WalletCheckResponse{}
+	rsp.Code = http.StatusOK
+	path := fmt.Sprintf("%s/api/wallet/check", url)
+
+	req := &proto.WalletCheckRequest{}
+	httpRsp, err := proto.NewRequest().SetHeaders("Authorization", token).Post(path, req)
+	if err != nil {
+		rsp.Code = http.StatusInternalServerError
+		rsp.Message = err.Error()
+		return marshal(rsp)
+	}
+
+	ret := &proto.WalletCheckResponse{}
+	if err := httpRsp.Json(ret); err != nil {
+		rsp.Code = httpRsp.StatusCode()
+		rsp.Message = err.Error()
+		return marshal(rsp)
+	}
+	rsp.UserExists = ret.UserExists
+	rsp.BackupExists = ret.BackupExists
+	rsp.BackupTimestamp = ret.BackupTimestamp
+	rsp.BackupCloudService = ret.BackupCloudService
+	return marshal(rsp)
+}
+
+// WalletCreateResponse --
+type WalletCreateResponse struct {
+	Status
+}
+
+// APIWalletCreate -- create the wallet.
+func APIWalletCreate(url string, token string, masterPrvKeyStr string, masterPubKeyStr string) string {
+	var signature string
+	rsp := &WalletCreateResponse{}
+	rsp.Code = http.StatusOK
+	path := fmt.Sprintf("%s/api/wallet/create", url)
+
+	// Master pravite key.
+	{
+		masterPrvKey, err := bip32.NewHDKeyFromString(masterPrvKeyStr)
+		if err != nil {
+			rsp.Code = http.StatusInternalServerError
+			rsp.Message = err.Error()
+			return marshal(rsp)
+		}
+
+		hash := sha256.Sum256([]byte(masterPubKeyStr))
+		sig, err := xcrypto.EcdsaSign(masterPrvKey.PrivateKey(), hash[:])
+		if err != nil {
+			rsp.Code = http.StatusInternalServerError
+			rsp.Message = err.Error()
+			return marshal(rsp)
+		}
+		signature = fmt.Sprintf("%x", sig)
+	}
+
+	req := &proto.WalletCreateRequest{
+		Signature:    signature,
+		MasterPubKey: masterPubKeyStr,
+	}
+	httpRsp, err := proto.NewRequest().SetHeaders("Authorization", token).Post(path, req)
+	if err != nil {
+		rsp.Code = http.StatusInternalServerError
+		rsp.Message = err.Error()
+		return marshal(rsp)
+	}
+	ret := &proto.WalletCreateResponse{}
+	if err := httpRsp.Json(ret); err != nil {
+		rsp.Code = httpRsp.StatusCode()
+		rsp.Message = err.Error()
+		return marshal(rsp)
+	}
+	return marshal(rsp)
+}
 
 // WalletPortfolioResponse --
 type WalletPortfolioResponse struct {

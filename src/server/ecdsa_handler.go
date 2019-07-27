@@ -22,7 +22,7 @@ func (h *Handler) ecdsaNewAddress(w http.ResponseWriter, r *http.Request) {
 	resp := newResponse(log, w)
 
 	// UID.
-	uid, cliMasterPubKey, err := h.userinfo("ecdsaNewAddress", r)
+	uid, err := h.userinfo("ecdsaNewAddress", r)
 	if err != nil {
 		log.Error("api.ecdsa.newaddress.uid.error:%+v", err)
 		resp.writeError(err)
@@ -40,7 +40,7 @@ func (h *Handler) ecdsaNewAddress(w http.ResponseWriter, r *http.Request) {
 	log.Info("api.ecdsa.newaddress.req:%+v", req)
 
 	// New address.
-	address, err := wdb.NewAddress(uid, cliMasterPubKey, req.Type)
+	address, err := wdb.NewAddress(uid, req.Type)
 	if err != nil {
 		log.Error("api.ecdsa.newaddress.wdb.newaddress.error:%+v", err)
 		resp.writeError(err)
@@ -61,7 +61,7 @@ func (h *Handler) ecdsaR2(w http.ResponseWriter, r *http.Request) {
 	resp := newResponse(log, w)
 
 	// UID.
-	uid, cliMasterPubKey, err := h.userinfo("ecdsaR2", r)
+	uid, err := h.userinfo("ecdsaR2", r)
 	if err != nil {
 		log.Error("api.ecdsa.r2.uid.error:%+v", err)
 		resp.writeError(err)
@@ -78,7 +78,7 @@ func (h *Handler) ecdsaR2(w http.ResponseWriter, r *http.Request) {
 	log.Info("api.ecdsa.r2.req:%+v", req)
 
 	// Master Private Key.
-	masterPrvKey, err := wdb.MasterPrvKey(uid, cliMasterPubKey)
+	masterPrvKey, err := wdb.MasterPrvKey(uid)
 	if err != nil {
 		log.Error("api.ecdsa.r2[%v].master.prvkey.error:%+v", uid, err)
 		resp.writeError(err)
@@ -107,7 +107,7 @@ func (h *Handler) ecdsaS2(w http.ResponseWriter, r *http.Request) {
 	resp := newResponse(log, w)
 
 	// UID.
-	uid, cliMasterPubKey, err := h.userinfo("ecdsaS2", r)
+	uid, err := h.userinfo("ecdsaS2", r)
 	if err != nil {
 		log.Error("api.ecdsa.s2.uid.error:%+v", err)
 		resp.writeError(err)
@@ -125,7 +125,7 @@ func (h *Handler) ecdsaS2(w http.ResponseWriter, r *http.Request) {
 	log.Info("api.ecdsa.s2.req:%+v", req)
 
 	// Master Private Key.
-	masterPrvKey, err := wdb.MasterPrvKey(uid, cliMasterPubKey)
+	masterPrvKey, err := wdb.MasterPrvKey(uid)
 	if err != nil {
 		log.Error("api.ecdsa.s2[%v].master.prvkey.error:%+v", uid, err)
 		resp.writeError(err)

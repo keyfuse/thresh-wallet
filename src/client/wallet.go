@@ -8,6 +8,8 @@ package client
 
 import (
 	"fmt"
+	"io/ioutil"
+	"os"
 	"strconv"
 	"time"
 
@@ -15,6 +17,237 @@ import (
 
 	"github.com/xandout/gorpl/action"
 )
+
+const (
+	rsapem = "/.keyfuse-wallet-rsa.pem"
+)
+
+func walletCheckAction(cli *Client) *action.Action {
+	return action.New("checkwallet", func(args ...interface{}) (interface{}, error) {
+		var rows [][]string
+		columns := []string{
+			"user_exists",
+			"backup_exists",
+		}
+
+		// Check.
+		if cli.token == "" {
+			pprintError("token.is.null", "gettoken [vcode]")
+			return nil, nil
+		}
+
+		// Balance.
+		{
+			rsp := &library.WalletCheckResponse{}
+			body := library.APIWalletCheck(cli.apiurl, cli.token)
+			if err := unmarshal(body, rsp); err != nil {
+				pprintError(err.Error(), "")
+				return nil, nil
+			}
+
+			if rsp.Code != 200 {
+				pprintError(rsp.Message, "")
+				return nil, nil
+			}
+
+			rows = append(rows, []string{fmt.Sprintf("%v", rsp.UserExists), fmt.Sprintf("%v", rsp.BackupExists)})
+			PrintQueryOutput(columns, rows)
+		}
+		return nil, nil
+	})
+}
+
+func walletCreateAction(cli *Client) *action.Action {
+	return action.New("createwallet", func(args ...interface{}) (interface{}, error) {
+		var rows [][]string
+		columns := []string{
+			"status",
+		}
+
+		// Check.
+		if cli.token == "" {
+			pprintError("token.is.null", "gettoken [vcode]")
+			return nil, nil
+		}
+
+		if cli.masterPrvKey == "" {
+			{
+				body := library.NewMasterPrvKey(cli.net)
+				rsp := &library.MasterPrvKeyResponse{}
+				if err := unmarshal(body, rsp); err != nil {
+					panic(err)
+				}
+				if rsp.Code != 200 {
+					panic(rsp.Message)
+				}
+				cli.masterPrvKey = rsp.MasterPrvKey
+			}
+			{
+				body := library.GetMasterPubKey(cli.net, cli.masterPrvKey)
+				rsp := &library.MasterPubKeyResponse{}
+				if err := unmarshal(body, rsp); err != nil {
+					panic(err)
+				}
+				if rsp.Code != 200 {
+					panic(rsp.Message)
+				}
+				cli.masterPubKey = rsp.MasterPubKey
+			}
+		}
+
+		// Create.
+		{
+			rsp := &library.WalletCreateResponse{}
+			body := library.APIWalletCreate(cli.apiurl, cli.token, cli.masterPrvKey, cli.masterPubKey)
+			if err := unmarshal(body, rsp); err != nil {
+				pprintError(err.Error(), "")
+				return nil, nil
+			}
+
+			if rsp.Code != 200 {
+				pprintError(rsp.Message, "")
+				return nil, nil
+			}
+
+			rows = append(rows, []string{"OK"})
+			PrintQueryOutput(columns, rows)
+		}
+		return nil, nil
+	})
+}
+
+func walletBackupAction(cli *Client) *action.Action {
+	return action.New("backupwallet", func(args ...interface{}) (interface{}, error) {
+		var rows [][]string
+		columns := []string{
+			"status",
+		}
+
+		// Check.
+		if cli.token == "" {
+			pprintError("token.is.null", "gettoken [vcode]")
+			return nil, nil
+		}
+
+		if cli.rsaPrvKey == "" {
+			{
+				body := library.NewRSAPrvKey()
+				rsp := &library.RSAKeyResponse{}
+				if err := unmarshal(body, rsp); err != nil {
+					panic(err)
+				}
+				if rsp.Code != 200 {
+					pprintError(rsp.Message, "")
+					return nil, nil
+				}
+				cli.rsaPrvKey = rsp.PrvKey
+			}
+
+			{
+				body := library.GetRSAPubKey(cli.rsaPrvKey)
+				rsp := &library.RSAPubKeyResponse{}
+				if err := unmarshal(body, rsp); err != nil {
+					panic(err)
+				}
+				if rsp.Code != 200 {
+					pprintError(rsp.Message, "")
+					return nil, nil
+				}
+				cli.rsaPubKey = rsp.PubKey
+			}
+
+			// Save to file.
+			home, _ := os.UserHomeDir()
+			f, err := os.OpenFile(home+rsapem, os.O_CREATE|os.O_WRONLY, 0644)
+			if err != nil {
+				pprintError(err.Error(), "")
+				return nil, nil
+			}
+			defer f.Close()
+			_, err = f.WriteString(cli.rsaPrvKey)
+			if err != nil {
+				pprintError(err.Error(), "")
+				return nil, nil
+			}
+		}
+
+		// backup.
+		{
+			rsp := &library.WalletBackupResponse{}
+			body := library.APIWalletBackup(cli.apiurl, cli.token, "", "local", cli.rsaPrvKey, cli.masterPrvKey)
+			if err := unmarshal(body, rsp); err != nil {
+				pprintError(err.Error(), "")
+				return nil, nil
+			}
+
+			if rsp.Code != 200 {
+				pprintError(rsp.Message, "")
+				return nil, nil
+			}
+
+			rows = append(rows, []string{"OK"})
+			PrintQueryOutput(columns, rows)
+		}
+		return nil, nil
+	})
+}
+
+func walletRecoverAction(cli *Client) *action.Action {
+	return action.New("recoverwallet", func(args ...interface{}) (interface{}, error) {
+		var rows [][]string
+		columns := []string{
+			"status",
+		}
+
+		// Check.
+		if cli.token == "" {
+			pprintError("token.is.null", "gettoken [vcode]")
+			return nil, nil
+		}
+
+		if cli.rsaPrvKey == "" {
+			home, _ := os.UserHomeDir()
+			data, err := ioutil.ReadFile(home + rsapem)
+			if err != nil {
+				pprintError(err.Error(), "")
+				return nil, nil
+			}
+			cli.rsaPrvKey = string(data)
+		}
+
+		// Recovery.
+		{
+			rsp := &library.WalletRestoreResponse{}
+			body := library.APIWalletRestore(cli.apiurl, cli.token, cli.rsaPrvKey)
+			if err := unmarshal(body, rsp); err != nil {
+				pprintError(err.Error(), "")
+				return nil, nil
+			}
+
+			if rsp.Code != 200 {
+				pprintError(rsp.Message, "")
+				return nil, nil
+			}
+			cli.masterPrvKey = rsp.MasterPrvKey
+		}
+
+		{
+			body := library.GetMasterPubKey(cli.net, cli.masterPrvKey)
+			rsp := &library.MasterPubKeyResponse{}
+			if err := unmarshal(body, rsp); err != nil {
+				panic(err)
+			}
+			if rsp.Code != 200 {
+				pprintError(rsp.Message, "")
+				return nil, nil
+			}
+			cli.masterPubKey = rsp.MasterPubKey
+		}
+		rows = append(rows, []string{"OK"})
+		PrintQueryOutput(columns, rows)
+		return nil, nil
+	})
+}
 
 func walletBalanceAction(cli *Client) *action.Action {
 	return action.New("getbalance", func(args ...interface{}) (interface{}, error) {

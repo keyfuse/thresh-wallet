@@ -37,14 +37,14 @@ func TestWalletDB(t *testing.T) {
 
 	// Get.
 	{
-		_, err := wdb.OpenUIDWallet(mockUID, mockCliMasterPubKey)
+		err := wdb.CreateWallet(mockUID, mockCliMasterPubKey)
 		assert.Nil(t, err)
 	}
 
 	// New address.
 	{
 		for i := 0; i < 10; i++ {
-			_, err := wdb.NewAddress(mockUID, mockCliMasterPubKey, "")
+			_, err := wdb.NewAddress(mockUID, "")
 			assert.Nil(t, err)
 		}
 	}
@@ -63,7 +63,7 @@ func TestWalletDB(t *testing.T) {
 				} else {
 					typ = ""
 				}
-				_, err := wdb.NewAddress(mockUID, mockCliMasterPubKey, typ)
+				_, err := wdb.NewAddress(mockUID, typ)
 				assert.Nil(t, err)
 			}(i)
 		}

@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestInfoHandler(t *testing.T) {
+func TestServerInfoHandler(t *testing.T) {
 	ts, cleanup := MockServer()
 	defer cleanup()
 
