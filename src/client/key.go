@@ -15,9 +15,8 @@ func dumpKeyAction(cli *Client) *action.Action {
 		var rows [][]string
 		columns := []string{
 			"masterprvkey(local)",
-			"masterpubkey(local)",
 		}
-		rows = append(rows, []string{cli.masterPrvKey, cli.masterPubKey})
+		rows = append(rows, []string{cli.masterPrvKey})
 		PrintQueryOutput(columns, rows)
 		return nil, nil
 	})

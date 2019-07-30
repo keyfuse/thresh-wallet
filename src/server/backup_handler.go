@@ -57,6 +57,7 @@ func (h *Handler) backupVCode(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) backupStore(w http.ResponseWriter, r *http.Request) {
 	log := h.log
 	wdb := h.wdb
+	smtp := h.smtp
 	vcode := h.backupCode
 	resp := newResponse(log, w)
 
@@ -107,13 +108,20 @@ func (h *Handler) backupStore(w http.ResponseWriter, r *http.Request) {
 			resp.writeErrorWithStatus(400, err)
 			return
 		}
+		vcode.Remove(uid)
 	}
 
-	// OK.
-	vcode.Remove(uid)
+	// wdb Backup.
 	if err := wdb.StoreBackup(uid, req.Email, req.DeviceID, req.CloudService, req.EncryptedPrvKey, req.EncryptionPubKey); err != nil {
 		log.Error("api.backup.wdb.store.backup.error:%+v", err)
 		resp.writeErrorWithStatus(500, err)
+		return
+	}
+
+	// smtp backup.
+	if err := smtp.Backup(uid, "KeyFuse Server Store Backup"); err != nil {
+		log.Error("api.backup.wdb.store.backup.smtp.error:%+v", err)
+		resp.writeErrorWithStatus(500, nil)
 		return
 	}
 	rsp := &proto.BackupStoreResponse{}

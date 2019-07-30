@@ -24,7 +24,7 @@ import (
 // WalletCheckResponse --
 type WalletCheckResponse struct {
 	Status
-	UserExists         bool   `json:"user_exists"`
+	WalletExists       bool   `json:"wallet_exists"`
 	BackupExists       bool   `json:"backup_exists"`
 	BackupTimestamp    int64  `json:"backup_timestamp"`
 	BackupCloudService string `json:"backup_cloudservice"`
@@ -50,7 +50,7 @@ func APIWalletCheck(url string, token string) string {
 		rsp.Message = err.Error()
 		return marshal(rsp)
 	}
-	rsp.UserExists = ret.UserExists
+	rsp.WalletExists = ret.WalletExists
 	rsp.BackupExists = ret.BackupExists
 	rsp.BackupTimestamp = ret.BackupTimestamp
 	rsp.BackupCloudService = ret.BackupCloudService
@@ -63,23 +63,35 @@ type WalletCreateResponse struct {
 }
 
 // APIWalletCreate -- create the wallet.
-func APIWalletCreate(url string, token string, masterPrvKeyStr string, masterPubKeyStr string) string {
+func APIWalletCreate(url string, token string, masterPrvKey string) string {
 	var signature string
+	var masterPubKey string
+
 	rsp := &WalletCreateResponse{}
 	rsp.Code = http.StatusOK
 	path := fmt.Sprintf("%s/api/wallet/create", url)
 
 	// Master pravite key.
 	{
-		masterPrvKey, err := bip32.NewHDKeyFromString(masterPrvKeyStr)
+		masterkey, err := bip32.NewHDKeyFromString(masterPrvKey)
 		if err != nil {
 			rsp.Code = http.StatusInternalServerError
 			rsp.Message = err.Error()
 			return marshal(rsp)
 		}
 
-		hash := sha256.Sum256([]byte(masterPubKeyStr))
-		sig, err := xcrypto.EcdsaSign(masterPrvKey.PrivateKey(), hash[:])
+		// Pubkey.
+		var net *network.Network
+		switch pre := masterPrvKey[:4]; pre {
+		case "xprv":
+			net = network.MainNet
+		case "tprv":
+			net = network.TestNet
+		}
+		masterPubKey = masterkey.HDPublicKey().ToString(net)
+
+		hash := sha256.Sum256([]byte(masterPubKey))
+		sig, err := xcrypto.EcdsaSign(masterkey.PrivateKey(), hash[:])
 		if err != nil {
 			rsp.Code = http.StatusInternalServerError
 			rsp.Message = err.Error()
@@ -90,7 +102,7 @@ func APIWalletCreate(url string, token string, masterPrvKeyStr string, masterPub
 
 	req := &proto.WalletCreateRequest{
 		Signature:    signature,
-		MasterPubKey: masterPubKeyStr,
+		MasterPubKey: masterPubKey,
 	}
 	httpRsp, err := proto.NewRequest().SetHeaders("Authorization", token).Post(path, req)
 	if err != nil {
@@ -286,12 +298,12 @@ type WalletSendResponse struct {
 	TxID string `json:"txid"`
 }
 
-func APIWalletSend(url string, token string, chainnet string, masterPrvKeyStr string, toAddress string, amount uint64, fees uint64) string {
+func APIWalletSend(url string, token string, chainnet string, masterPrvKey string, toAddress string, amount uint64, fees uint64) string {
 	var err error
 	var to xcore.Address
 	var change xcore.Address
 	var shareR1 *secp256k1.Scalar
-	var masterPrvKey *bip32.HDKey
+	var masterkey *bip32.HDKey
 	var unspents []proto.WalletUnspentResponse
 
 	rsp := &WalletSendResponse{}
@@ -306,7 +318,7 @@ func APIWalletSend(url string, token string, chainnet string, masterPrvKeyStr st
 
 	// Master pravite key.
 	{
-		masterPrvKey, err = bip32.NewHDKeyFromString(masterPrvKeyStr)
+		masterkey, err = bip32.NewHDKeyFromString(masterPrvKey)
 		if err != nil {
 			rsp.Code = http.StatusInternalServerError
 			rsp.Message = err.Error()
@@ -391,7 +403,7 @@ func APIWalletSend(url string, token string, chainnet string, masterPrvKeyStr st
 				sighash = tx.RawSignatureHash(i, xcore.SigHashAll)
 			}
 
-			cliPrvKey, err := masterPrvKey.Derive(unspent.Pos)
+			cliPrvKey, err := masterkey.Derive(unspent.Pos)
 			if err != nil {
 				rsp.Code = http.StatusInternalServerError
 				rsp.Message = err.Error()

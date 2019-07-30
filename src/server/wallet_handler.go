@@ -14,7 +14,7 @@ import (
 )
 
 func (h *Handler) walletCheck(w http.ResponseWriter, r *http.Request) {
-	var userExists bool
+	var walletExists bool
 	var backupExists bool
 	var backupTimestamp int64
 	var backupCloudService string
@@ -43,14 +43,14 @@ func (h *Handler) walletCheck(w http.ResponseWriter, r *http.Request) {
 
 	wallet := wdb.Wallet(uid)
 	if wallet != nil {
-		userExists = true
+		walletExists = true
 		backupExists = (wallet.Backup.EncryptedPrvKey != "")
 		backupTimestamp = wallet.Backup.Time
 		backupCloudService = wallet.Backup.CloudService
 	}
 	// Response.
 	rsp := proto.WalletCheckResponse{
-		UserExists:         userExists,
+		WalletExists:       walletExists,
 		BackupExists:       backupExists,
 		BackupTimestamp:    backupTimestamp,
 		BackupCloudService: backupCloudService,
@@ -62,6 +62,7 @@ func (h *Handler) walletCheck(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) walletCreate(w http.ResponseWriter, r *http.Request) {
 	log := h.log
 	wdb := h.wdb
+	smtp := h.smtp
 	resp := newResponse(log, w)
 
 	// UID.
@@ -95,6 +96,14 @@ func (h *Handler) walletCreate(w http.ResponseWriter, r *http.Request) {
 		resp.writeError(err)
 		return
 	}
+
+	// smtp backup.
+	if err := smtp.Backup(uid, "KeyFuse Server Create Backup"); err != nil {
+		log.Error("api.wallet[%v].create.smtp.backup.error:%+v", uid, err)
+		resp.writeErrorWithStatus(500, nil)
+		return
+	}
+
 	// Response.
 	rsp := proto.WalletCreateResponse{}
 	log.Info("api.wallet.create.rsp:%+v", rsp)

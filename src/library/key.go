@@ -38,29 +38,3 @@ func NewMasterPrvKey(chainnet string) string {
 	rsp.MasterPrvKey = mk.ToString(net)
 	return marshal(rsp)
 }
-
-// MasterPubKeyResponse --
-type MasterPubKeyResponse struct {
-	Status
-	MasterPubKey string `json:"masterpubkey"`
-}
-
-// GetMasterPubKey -- get the master public key by priv key.
-func GetMasterPubKey(chainnet string, masterPrvKey string) string {
-	rsp := &MasterPubKeyResponse{}
-	rsp.Code = http.StatusOK
-
-	net := network.TestNet
-	switch chainnet {
-	case MainNet:
-		net = network.MainNet
-	}
-	mk, err := bip32.NewHDKeyFromString(masterPrvKey)
-	if err != nil {
-		rsp.Message = err.Error()
-		rsp.Code = http.StatusInternalServerError
-		return marshal(rsp)
-	}
-	rsp.MasterPubKey = mk.HDPublicKey().ToString(net)
-	return marshal(rsp)
-}

@@ -36,7 +36,7 @@ func TestWalletCheck(t *testing.T) {
 
 	t.Logf("%+v", body)
 	assert.Equal(t, 200, rsp.Code)
-	assert.False(t, rsp.UserExists)
+	assert.False(t, rsp.WalletExists)
 	assert.False(t, rsp.BackupExists)
 }
 
@@ -56,7 +56,7 @@ func TestWalletCreate(t *testing.T) {
 		token = rsp.Token
 	}
 
-	body := APIWalletCreate(ts.URL, token, mockMasterPrvKey, mockMasterPubKey)
+	body := APIWalletCreate(ts.URL, token, mockMasterPrvKey)
 	rsp := &WalletCreateResponse{}
 	unmarshal(body, rsp)
 

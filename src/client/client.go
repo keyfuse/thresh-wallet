@@ -22,12 +22,10 @@ type Client struct {
 	rsaPrvKey    string
 	rsaPubKey    string
 	masterPrvKey string
-	masterPubKey string
 }
 
 func NewClient(apiurl string, uid string, chainnet string, masterPrvKey string) *Client {
 	net := "testnet"
-	mkpubkey := ""
 	mkprvkey := masterPrvKey
 
 	// Chainnet.
@@ -47,21 +45,6 @@ func NewClient(apiurl string, uid string, chainnet string, masterPrvKey string) 
 		}
 	}
 
-	// Key.
-	{
-		if mkprvkey != "" {
-			body := library.GetMasterPubKey(net, mkprvkey)
-			rsp := &library.MasterPubKeyResponse{}
-			if err := unmarshal(body, rsp); err != nil {
-				panic(err)
-			}
-			if rsp.Code != 200 {
-				panic(rsp.Message)
-			}
-			mkpubkey = rsp.MasterPubKey
-		}
-	}
-
 	// Help action.
 	helpAction(nil).Action()
 	return &Client{
@@ -69,7 +52,6 @@ func NewClient(apiurl string, uid string, chainnet string, masterPrvKey string) 
 		uid:          uid,
 		apiurl:       apiurl,
 		masterPrvKey: mkprvkey,
-		masterPubKey: mkpubkey,
 	}
 }
 

@@ -8,15 +8,15 @@ package library
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestNewMasterKey(t *testing.T) {
 	body := NewMasterPrvKey("testnet")
 	t.Logf("body:%+v", body)
 
-	mkrsp := &MasterPrvKeyResponse{}
-	unmarshal(body, mkrsp)
-
-	body = GetMasterPubKey("testnet", mkrsp.MasterPrvKey)
-	t.Logf("body:%+v", body)
+	rsp := &MasterPrvKeyResponse{}
+	unmarshal(body, rsp)
+	assert.Equal(t, 200, rsp.Code)
 }

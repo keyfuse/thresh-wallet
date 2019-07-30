@@ -38,17 +38,17 @@ func TestWalletBackup(t *testing.T) {
 
 		t.Logf("%+v", body)
 		assert.Equal(t, 200, rsp.Code)
-		assert.False(t, rsp.UserExists)
+		assert.False(t, rsp.WalletExists)
 		assert.False(t, rsp.BackupExists)
 	}
 
 	// Create.
 	{
-		body := APIWalletCreate(ts.URL, token, mockMasterPrvKey, mockMasterPubKey)
+		body := APIWalletCreate(ts.URL, token, mockMasterPrvKey)
 		rsp := &WalletCreateResponse{}
 		unmarshal(body, rsp)
 
-		t.Logf("%+v", body)
+		t.Logf("create.rsp:%+v", body)
 		assert.Equal(t, 200, rsp.Code)
 	}
 
@@ -58,9 +58,9 @@ func TestWalletBackup(t *testing.T) {
 		rsp := &WalletCheckResponse{}
 		unmarshal(body, rsp)
 
-		t.Logf("%+v", body)
+		t.Logf("check.rsp:%+v", body)
 		assert.Equal(t, 200, rsp.Code)
-		assert.True(t, rsp.UserExists)
+		assert.True(t, rsp.WalletExists)
 		assert.False(t, rsp.BackupExists)
 	}
 
@@ -70,7 +70,7 @@ func TestWalletBackup(t *testing.T) {
 		rsp := &WalletBackupResponse{}
 		unmarshal(body, rsp)
 
-		t.Logf("%+v", body)
+		t.Logf("backup.rsp:%+v", body)
 		assert.Equal(t, 200, rsp.Code)
 	}
 
@@ -82,7 +82,7 @@ func TestWalletBackup(t *testing.T) {
 
 		t.Logf("%+v", body)
 		assert.Equal(t, 200, rsp.Code)
-		assert.True(t, rsp.UserExists)
+		assert.True(t, rsp.WalletExists)
 		assert.True(t, rsp.BackupExists)
 	}
 
@@ -92,7 +92,7 @@ func TestWalletBackup(t *testing.T) {
 		rsp := &WalletRestoreResponse{}
 		unmarshal(body, rsp)
 
-		t.Logf("%+v", body)
+		t.Logf("restore.rsp:%+v", body)
 		assert.Equal(t, 200, rsp.Code)
 		assert.Equal(t, mockMasterPrvKey, rsp.MasterPrvKey)
 	}

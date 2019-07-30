@@ -18,12 +18,13 @@ import (
 // Handler --
 type Handler struct {
 	log        *xlog.Log
-	conf       *Config
 	wdb        *WalletDB
-	loginCode  *Vcode
-	backupCode *Vcode
+	conf       *Config
+	smtp       *Smtp
 	netprefix  string
 	tokenAuth  *jwtauth.JWTAuth
+	loginCode  *Vcode
+	backupCode *Vcode
 }
 
 // NewHandler -- creates new Handler.
@@ -36,13 +37,15 @@ func NewHandler(log *xlog.Log, conf *Config) *Handler {
 		netprefix = "xpub"
 	}
 	wdb := NewWalletDB(log, conf)
+	smtp := NewSmtp(log, conf)
 	loginCode := NewVcode(log, conf)
 	backupCode := NewVcode(log, conf)
 	tokenAuth := jwtauth.New("HS256", []byte(conf.TokenSecret), nil)
 	handler := &Handler{
 		log:        log,
-		conf:       conf,
 		wdb:        wdb,
+		conf:       conf,
+		smtp:       smtp,
 		loginCode:  loginCode,
 		backupCode: backupCode,
 		netprefix:  netprefix,
@@ -55,7 +58,6 @@ func NewHandler(log *xlog.Log, conf *Config) *Handler {
 func (h *Handler) Init() error {
 	conf := h.conf
 	wdb := h.wdb
-
 	return wdb.Open(conf.DataDir)
 }
 

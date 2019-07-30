@@ -12,7 +12,7 @@ type WalletCheckRequest struct {
 
 // WalletCheckResponse --
 type WalletCheckResponse struct {
-	UserExists         bool   `json:"user_exists"`
+	WalletExists       bool   `json:"wallet_exists"`
 	BackupExists       bool   `json:"backup_exists"`
 	BackupTimestamp    int64  `json:"backup_timestamp"`
 	BackupCloudService string `json:"backup_cloudservice"`

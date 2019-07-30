@@ -11,16 +11,26 @@ import (
 	"io/ioutil"
 )
 
+// SmtpConfig --
+type SmtpConfig struct {
+	Server   string `json:"server"`
+	Port     int    `json:"port"`
+	UserName string `json:"username"`
+	Password string `json:"password"`
+	BackupTo string `json:"backup_to"`
+}
+
 // Config --
 type Config struct {
-	DataDir              string `json:"datadir"`
-	ChainNet             string `json:"chainnet"`
-	Endpoint             string `json:"endpoint"`
-	TokenSecret          string `json:"token_secret"`
-	SpvProvider          string `json:"spv_provider"`
-	EnableVCode          bool   `json:"enable_vcode"`
-	VCodeExpired         int    `json:"vcode_expired"`
-	WalletSyncIntervalMs int    `json:"wallet_sync_interval_ms"`
+	DataDir              string      `json:"datadir"`
+	ChainNet             string      `json:"chainnet"`
+	Endpoint             string      `json:"endpoint"`
+	TokenSecret          string      `json:"token_secret"`
+	SpvProvider          string      `json:"spv_provider"`
+	EnableVCode          bool        `json:"enable_vcode"`
+	VCodeExpired         int         `json:"vcode_expired"`
+	WalletSyncIntervalMs int         `json:"wallet_sync_interval_ms"`
+	Smtp                 *SmtpConfig `json:"smtp"`
 }
 
 // DefaultConfig -- returns default server config.

@@ -35,7 +35,9 @@ func (r *response) writeError(err error) {
 func (r *response) writeErrorWithStatus(status int, err error) {
 	w := r.w
 	w.WriteHeader(status)
-	w.Write([]byte(err.Error()))
+	if err != nil {
+		w.Write([]byte(err.Error()))
+	}
 }
 
 func (r *response) writeJSON(thing interface{}) {

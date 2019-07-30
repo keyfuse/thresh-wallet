@@ -26,7 +26,7 @@ func walletCheckAction(cli *Client) *action.Action {
 	return action.New("checkwallet", func(args ...interface{}) (interface{}, error) {
 		var rows [][]string
 		columns := []string{
-			"user_exists",
+			"wallet_exists",
 			"backup_exists",
 		}
 
@@ -50,7 +50,7 @@ func walletCheckAction(cli *Client) *action.Action {
 				return nil, nil
 			}
 
-			rows = append(rows, []string{fmt.Sprintf("%v", rsp.UserExists), fmt.Sprintf("%v", rsp.BackupExists)})
+			rows = append(rows, []string{fmt.Sprintf("%v", rsp.WalletExists), fmt.Sprintf("%v", rsp.BackupExists)})
 			PrintQueryOutput(columns, rows)
 		}
 		return nil, nil
@@ -82,23 +82,12 @@ func walletCreateAction(cli *Client) *action.Action {
 				}
 				cli.masterPrvKey = rsp.MasterPrvKey
 			}
-			{
-				body := library.GetMasterPubKey(cli.net, cli.masterPrvKey)
-				rsp := &library.MasterPubKeyResponse{}
-				if err := unmarshal(body, rsp); err != nil {
-					panic(err)
-				}
-				if rsp.Code != 200 {
-					panic(rsp.Message)
-				}
-				cli.masterPubKey = rsp.MasterPubKey
-			}
 		}
 
 		// Create.
 		{
 			rsp := &library.WalletCreateResponse{}
-			body := library.APIWalletCreate(cli.apiurl, cli.token, cli.masterPrvKey, cli.masterPubKey)
+			body := library.APIWalletCreate(cli.apiurl, cli.token, cli.masterPrvKey)
 			if err := unmarshal(body, rsp); err != nil {
 				pprintError(err.Error(), "")
 				return nil, nil
@@ -229,19 +218,6 @@ func walletRecoverAction(cli *Client) *action.Action {
 				return nil, nil
 			}
 			cli.masterPrvKey = rsp.MasterPrvKey
-		}
-
-		{
-			body := library.GetMasterPubKey(cli.net, cli.masterPrvKey)
-			rsp := &library.MasterPubKeyResponse{}
-			if err := unmarshal(body, rsp); err != nil {
-				panic(err)
-			}
-			if rsp.Code != 200 {
-				pprintError(rsp.Message, "")
-				return nil, nil
-			}
-			cli.masterPubKey = rsp.MasterPubKey
 		}
 		rows = append(rows, []string{"OK"})
 		PrintQueryOutput(columns, rows)
