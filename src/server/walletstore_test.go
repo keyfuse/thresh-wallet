@@ -48,7 +48,7 @@ func TestWalletStore(t *testing.T) {
 
 	// Read.
 	{
-		path := "/tmp/tss/10086.json"
+		path := "/tmp/tss/13888888888.json"
 		got, err := wstore.Read(path)
 		assert.Nil(t, err)
 		assert.Equal(t, wallet, got)

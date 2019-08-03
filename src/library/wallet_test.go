@@ -20,10 +20,9 @@ func TestWalletCheck(t *testing.T) {
 	ts, cleanup := server.MockServer()
 	defer cleanup()
 
-	mobile := "10096"
 	// Token.
 	{
-		body := APIGetToken(ts.URL, mobile, "vcode")
+		body := APIGetToken(ts.URL, mockMobile1, "vcode")
 		rsp := &TokenResponse{}
 		unmarshal(body, rsp)
 		assert.Equal(t, 200, rsp.Code)
@@ -46,10 +45,9 @@ func TestWalletCreate(t *testing.T) {
 	ts, cleanup := server.MockServer()
 	defer cleanup()
 
-	mobile := "10096"
 	// Token.
 	{
-		body := APIGetToken(ts.URL, mobile, "vcode")
+		body := APIGetToken(ts.URL, mockMobile1, "vcode")
 		rsp := &TokenResponse{}
 		unmarshal(body, rsp)
 		assert.Equal(t, 200, rsp.Code)
@@ -70,10 +68,9 @@ func TestWalletPortfolio(t *testing.T) {
 	ts, cleanup := server.MockServer()
 	defer cleanup()
 
-	mobile := "10086"
 	// Token.
 	{
-		body := APIGetToken(ts.URL, mobile, "vcode")
+		body := APIGetToken(ts.URL, mockMobile, "vcode")
 		rsp := &TokenResponse{}
 		unmarshal(body, rsp)
 		assert.Equal(t, 200, rsp.Code)
@@ -94,10 +91,9 @@ func TestWalletBalance(t *testing.T) {
 	ts, cleanup := server.MockServer()
 	defer cleanup()
 
-	mobile := "10086"
 	// Token.
 	{
-		body := APIGetToken(ts.URL, mobile, "vcode")
+		body := APIGetToken(ts.URL, mockMobile, "vcode")
 		rsp := &TokenResponse{}
 		unmarshal(body, rsp)
 		assert.Equal(t, 200, rsp.Code)
@@ -119,10 +115,9 @@ func TestWalletTxs(t *testing.T) {
 	ts, cleanup := server.MockServer()
 	defer cleanup()
 
-	mobile := "10086"
 	// Token.
 	{
-		body := APIGetToken(ts.URL, mobile, "vcode")
+		body := APIGetToken(ts.URL, mockMobile, "vcode")
 		rsp := &TokenResponse{}
 		unmarshal(body, rsp)
 		assert.Equal(t, 200, rsp.Code)
@@ -144,10 +139,9 @@ func TestAPIEcdsaNewAddress(t *testing.T) {
 	ts, cleanup := server.MockServer()
 	defer cleanup()
 
-	mobile := "10086"
 	// Token.
 	{
-		body := APIGetToken(ts.URL, mobile, "vcode")
+		body := APIGetToken(ts.URL, mockMobile, "vcode")
 		rsp := &TokenResponse{}
 		unmarshal(body, rsp)
 		assert.Equal(t, 200, rsp.Code)
@@ -170,10 +164,9 @@ func TestAPIWalletSendFees(t *testing.T) {
 	ts, cleanup := server.MockServer()
 	defer cleanup()
 
-	mobile := "10086"
 	// Token.
 	{
-		body := APIGetToken(ts.URL, mobile, "vcode")
+		body := APIGetToken(ts.URL, mockMobile, "vcode")
 		rsp := &TokenResponse{}
 		unmarshal(body, rsp)
 		assert.Equal(t, 200, rsp.Code)
@@ -196,10 +189,9 @@ func TestAPIWalletSend(t *testing.T) {
 	ts, cleanup := server.MockServer()
 	defer cleanup()
 
-	mobile := "10086"
 	// Token.
 	{
-		body := APIGetToken(ts.URL, mobile, "vcode")
+		body := APIGetToken(ts.URL, mockMobile, "vcode")
 		rsp := &TokenResponse{}
 		unmarshal(body, rsp)
 		assert.Equal(t, 200, rsp.Code)

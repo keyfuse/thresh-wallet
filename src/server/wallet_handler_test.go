@@ -47,7 +47,7 @@ func TestWalletCreate(t *testing.T) {
 	// Token.
 	{
 		req := &proto.TokenRequest{
-			UID: "138888",
+			UID: mockEmail,
 		}
 
 		httpRsp, err := proto.NewRequest().Post(ts.URL+"/api/login/token", req)

@@ -7,9 +7,10 @@
 package server
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
-	"math/rand"
+	"math/big"
 	"net/http"
 	"time"
 
@@ -20,6 +21,7 @@ import (
 
 func (h *Handler) loginVCode(w http.ResponseWriter, r *http.Request) {
 	log := h.log
+	smtp := h.smtp
 	vcode := h.loginCode
 	resp := newResponse(log, w)
 
@@ -33,10 +35,29 @@ func (h *Handler) loginVCode(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Info("api.vcode.req:%+v", req)
 
-	rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
-	code := fmt.Sprintf("%06v", rnd.Int31n(1000000))
+	result, err := rand.Int(rand.Reader, big.NewInt(1000000))
+	if err != nil {
+		resp.writeError(fmt.Errorf("api.generate.vcode.error"))
+		return
+	}
+
+	code := fmt.Sprintf("%06v", result)
 	vcode.Add(req.UID, code)
-	log.Info("api.vcode.resp:[uid:%v, vcode:%v]", req.UID, code)
+	switch loginType(req.UID) {
+	case Mobile:
+		log.Info("api.vcode.mobile.resp:[uid:%v, vcode:%v]", req.UID, code)
+	case Email:
+		log.Info("api.vcode.email.resp:[uid:%v, vcode:%v]", req.UID, code)
+		if err := smtp.VCode(req.UID, "KeyFuse", code); err != nil {
+			log.Error("api.vcode.email.send.error:%+v", err)
+			resp.writeError(fmt.Errorf("api.email.send.vcode.error"))
+			return
+		}
+	default:
+		log.Error("api.vcode.uid.type.unknow:%+v", req.UID)
+		resp.writeError(fmt.Errorf("api.vcode.uid.type.unknow:%v, need.mobile.or.email", req.UID))
+		return
+	}
 }
 
 func (h *Handler) loginToken(w http.ResponseWriter, r *http.Request) {

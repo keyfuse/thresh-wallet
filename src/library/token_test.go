@@ -18,7 +18,7 @@ func TestTokenAPIGetVCode(t *testing.T) {
 	ts, cleanup := server.MockServer()
 	defer cleanup()
 
-	mobile := "10086"
+	mobile := "13888888888"
 	body := APIGetVCode(ts.URL, mobile)
 	rsp := &VcodeResponse{}
 	unmarshal(body, rsp)
@@ -30,7 +30,7 @@ func TestTokenAPIGetToken(t *testing.T) {
 	ts, cleanup := server.MockServer()
 	defer cleanup()
 
-	mobile := "10086"
+	mobile := "13888888888"
 	body := APIGetToken(ts.URL, mobile, "vcode")
 	rsp := &TokenResponse{}
 	unmarshal(body, rsp)

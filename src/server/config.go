@@ -28,6 +28,7 @@ type Config struct {
 	TokenSecret          string      `json:"token_secret"`
 	SpvProvider          string      `json:"spv_provider"`
 	EnableVCode          bool        `json:"enable_vcode"`
+	ForceRecover         bool        `json:"force_recover"`
 	VCodeExpired         int         `json:"vcode_expired"`
 	WalletSyncIntervalMs int         `json:"wallet_sync_interval_ms"`
 	Smtp                 *SmtpConfig `json:"smtp"`

@@ -10,8 +10,8 @@ import (
 )
 
 var (
-	mock10086Json = `{
- "uid": "10086",
+	mock13888888888Json = `{
+ "uid": "13888888888",
  "did": "",
  "backup": null,
  "lastpos": 7,
@@ -105,8 +105,9 @@ var (
 )
 
 const (
-	mockUID             = "10086"
-	mockToken           = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkaWQiOiIiLCJuZXQiOiJ0ZXN0bmV0IiwidCI6MTU2MzkzMTcyOCwidWlkIjoiMTAwODYifQ.cgjf4pox_MegQsr7ft4JzvANj18E73qV9rjmZuxLD1s"
+	mockUID             = "13888888888"
+	mockEmail           = "a@keyfuse.org"
+	mockToken           = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkaWQiOiIiLCJuZXQiOiJ0ZXN0bmV0IiwidCI6MTU2NDc5NzI0MCwidWlkIjoiMTM4ODg4ODg4ODgifQ.TbaiK-OW0z9VlHOfvdnuExU2OhvnbUKtB9vTVR4mag0"
 	mockSvrMasterPrvKey = "tprv8ZgxMBicQKsPfNhXDHV93ummM6rEzTmxHf96Mk3FnpgoaoNYPjfSCZyHFnFQnQDLAiMNsvJqEtvjCkvo5P3CPRHQx5GcZxPqRHy31q2oWXD"
 	mockCliMasterPrvKey = "tprv8ZgxMBicQKsPeVfrhGFHCRu4cQBY1VFSogap4qSzmNTuow93Y1aeXTco2Vdw41VLUvPC4e3X1ZF9uoJEeRbUpLR4DqtzvLd3AQnQobNaGA4"
 	mockCliMasterPubKey = "tpubD6NzVbkrYhZ4XxheauusbqZBBRhUApSMNzBbMMVJBeGJeRPpAQQEhxEfCeLfmUyet3FXXybAoWhJ3uZe4fQvqgVCd8UPKX8sP4qAXKEHZGk"
@@ -117,7 +118,6 @@ func MockConfig() *Config {
 	conf.EnableVCode = false
 	conf.DataDir = "/tmp/tss"
 	conf.WalletSyncIntervalMs = 30
-
 	return conf
 }
 
@@ -127,7 +127,7 @@ func MockServer() (*httptest.Server, func()) {
 
 	os.MkdirAll(conf.DataDir, os.ModePerm)
 	os.RemoveAll(conf.DataDir + "/*")
-	if err := ioutil.WriteFile(conf.DataDir+"/10086.json", []byte(mock10086Json), 0644); err != nil {
+	if err := ioutil.WriteFile(conf.DataDir+"/13888888888.json", []byte(mock13888888888Json), 0644); err != nil {
 		panic(err)
 	}
 	router := NewAPIRouter(log, conf)

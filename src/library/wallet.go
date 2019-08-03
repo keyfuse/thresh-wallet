@@ -26,6 +26,7 @@ type WalletCheckResponse struct {
 	Status
 	WalletExists       bool   `json:"wallet_exists"`
 	BackupExists       bool   `json:"backup_exists"`
+	ForceRecover       bool   `json:"force_recover"`
 	BackupTimestamp    int64  `json:"backup_timestamp"`
 	BackupCloudService string `json:"backup_cloudservice"`
 }
@@ -52,6 +53,7 @@ func APIWalletCheck(url string, token string) string {
 	}
 	rsp.WalletExists = ret.WalletExists
 	rsp.BackupExists = ret.BackupExists
+	rsp.ForceRecover = ret.ForceRecover
 	rsp.BackupTimestamp = ret.BackupTimestamp
 	rsp.BackupCloudService = ret.BackupCloudService
 	return marshal(rsp)

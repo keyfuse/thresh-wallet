@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	rsapem = "/.keyfuse-wallet-rsa.pem"
+	rsapem = "/.keyfuse-wallet-rsa.pem_"
 )
 
 func walletCheckAction(cli *Client) *action.Action {
@@ -28,6 +28,7 @@ func walletCheckAction(cli *Client) *action.Action {
 		columns := []string{
 			"wallet_exists",
 			"backup_exists",
+			"force_recover",
 		}
 
 		// Check.
@@ -50,7 +51,11 @@ func walletCheckAction(cli *Client) *action.Action {
 				return nil, nil
 			}
 
-			rows = append(rows, []string{fmt.Sprintf("%v", rsp.WalletExists), fmt.Sprintf("%v", rsp.BackupExists)})
+			rows = append(rows, []string{
+				fmt.Sprintf("%v", rsp.WalletExists),
+				fmt.Sprintf("%v", rsp.BackupExists),
+				fmt.Sprintf("%v", rsp.ForceRecover),
+			})
 			PrintQueryOutput(columns, rows)
 		}
 		return nil, nil
@@ -147,7 +152,7 @@ func walletBackupAction(cli *Client) *action.Action {
 
 			// Save to file.
 			home, _ := os.UserHomeDir()
-			f, err := os.OpenFile(home+rsapem, os.O_CREATE|os.O_WRONLY, 0644)
+			f, err := os.OpenFile(home+rsapem+cli.uid, os.O_CREATE|os.O_WRONLY, 0644)
 			if err != nil {
 				pprintError(err.Error(), "")
 				return nil, nil
@@ -196,7 +201,7 @@ func walletRecoverAction(cli *Client) *action.Action {
 
 		if cli.rsaPrvKey == "" {
 			home, _ := os.UserHomeDir()
-			data, err := ioutil.ReadFile(home + rsapem)
+			data, err := ioutil.ReadFile(home + rsapem + cli.uid)
 			if err != nil {
 				pprintError(err.Error(), "")
 				return nil, nil

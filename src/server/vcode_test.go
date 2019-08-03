@@ -22,7 +22,7 @@ func TestVcode(t *testing.T) {
 
 	// Add.
 	{
-		vcode.Add("10086", "88886666")
+		vcode.Add("13888888888", "88886666")
 	}
 
 	// UID Error.
@@ -33,13 +33,13 @@ func TestVcode(t *testing.T) {
 
 	// Code error.
 	{
-		err := vcode.Check("10086", "8886666")
+		err := vcode.Check("13888888888", "8886666")
 		assert.NotNil(t, err)
 	}
 
 	// OK.
 	{
-		err := vcode.Check("10086", "88886666")
+		err := vcode.Check("13888888888", "88886666")
 		assert.Nil(t, err)
 	}
 }

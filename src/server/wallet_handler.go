@@ -21,6 +21,7 @@ func (h *Handler) walletCheck(w http.ResponseWriter, r *http.Request) {
 
 	log := h.log
 	wdb := h.wdb
+	conf := h.conf
 	resp := newResponse(log, w)
 
 	// UID.
@@ -52,6 +53,7 @@ func (h *Handler) walletCheck(w http.ResponseWriter, r *http.Request) {
 	rsp := proto.WalletCheckResponse{
 		WalletExists:       walletExists,
 		BackupExists:       backupExists,
+		ForceRecover:       conf.ForceRecover,
 		BackupTimestamp:    backupTimestamp,
 		BackupCloudService: backupCloudService,
 	}

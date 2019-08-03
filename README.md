@@ -1,10 +1,17 @@
 # thresh-wallet
 
-A Bitcoin wallet powered by two-party ECDSA written in golang.
+A cross-platform Bitcoin wallet powered by two-party ECDSA written in golang.
 
 [![Build Status](https://travis-ci.org/keyfuse/thresh-wallet.png)](https://travis-ci.org/keyfuse/thresh-wallet) [![Go Report Card](https://goreportcard.com/badge/github.com/keyfuse/thresh-wallet)](https://goreportcard.com/report/github.com/keyfuse/thresh-wallet) [![codecov.io](https://codecov.io/gh/keyfuse/thresh-wallet/graphs/badge.svg)](https://codecov.io/gh/keyfuse/thresh-wallet/branch/master)
 
-## How to Build
+## Platforms
+
+- Linux
+- Android
+- OS X
+- iOS
+
+## Building
 
 To build thresh-wallet from the source code you need to have a working
 Go environment with [version 1.12 or greater installed](https://golang.org/doc/install).
@@ -18,13 +25,13 @@ $ export GOPATH=`pwd`
 $ make build
 ```
 
-#### Build IOS Library
+#### IOS Library
 
 ```
 $ make buildosx
 ```
 
-#### Build Android Library
+#### Android Library
 
 ```
 $ make buildandroid
@@ -39,7 +46,7 @@ $ make buildandroid
 ## Client
 
 ```
-./bin/threshwallet-client -mobile=10086 -apiurl=http://localhost:9099
+./bin/threshwallet-client -uid=xx@xx.com -apiurl=http://localhost:9099
 +------------------+----------------------------------------+---------------------------------------------------------------------+
 |     commands     |                 usage                  |                               example                               |
 +------------------+----------------------------------------+---------------------------------------------------------------------+
