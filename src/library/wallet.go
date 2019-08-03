@@ -250,6 +250,39 @@ func APIWalletTxs(url string, token string, offset int, limit int) string {
 	return marshal(rsp)
 }
 
+// WalletAddressesResponse --
+type WalletAddressesResponse struct {
+	Status
+	Addresses []proto.WalletAddressesResponse `json:"addresses"`
+}
+
+// APIWalletAddresses -- get the address list.
+func APIWalletAddresses(url string, token string, offset int, limit int) string {
+	rsp := &WalletAddressesResponse{}
+	rsp.Code = http.StatusOK
+	path := fmt.Sprintf("%s/api/wallet/addresses", url)
+
+	req := &proto.WalletAddressesRequest{
+		Offset: offset,
+		Limit:  limit,
+	}
+	httpRsp, err := proto.NewRequest().SetHeaders("Authorization", token).Post(path, req)
+	if err != nil {
+		rsp.Code = http.StatusInternalServerError
+		rsp.Message = err.Error()
+		return marshal(rsp)
+	}
+
+	var addrsRsp []proto.WalletAddressesResponse
+	if err := httpRsp.Json(&addrsRsp); err != nil {
+		rsp.Code = httpRsp.StatusCode()
+		rsp.Message = err.Error()
+		return marshal(rsp)
+	}
+	rsp.Addresses = addrsRsp
+	return marshal(rsp)
+}
+
 // WalletPrepareSendResponse --
 type WalletSendFeesResponse struct {
 	Status

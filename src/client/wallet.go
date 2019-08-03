@@ -323,6 +323,45 @@ func walletTxsAction(cli *Client) *action.Action {
 	})
 }
 
+func walletAddressesAction(cli *Client) *action.Action {
+	return action.New("getaddresses", func(args ...interface{}) (interface{}, error) {
+		var rows [][]string
+		columns := []string{
+			"address",
+			"pos",
+		}
+
+		// Check.
+		if cli.token == "" {
+			pprintError("token.is.null", "gettoken [vcode]")
+			return nil, nil
+		}
+
+		{
+			rsp := &library.WalletAddressesResponse{}
+			body := library.APIWalletAddresses(cli.apiurl, cli.token, 0, 128)
+			if err := unmarshal(body, rsp); err != nil {
+				pprintError(err.Error(), "")
+				return nil, nil
+			}
+
+			if rsp.Code != 200 {
+				pprintError(rsp.Message, "")
+				return nil, nil
+			}
+
+			for _, addr := range rsp.Addresses {
+				rows = append(rows, []string{
+					fmt.Sprintf("%v", addr.Address),
+					fmt.Sprintf("%v", addr.Pos),
+				})
+			}
+			PrintQueryOutput(columns, rows)
+		}
+		return nil, nil
+	})
+}
+
 func walletNewAddressAction(cli *Client) *action.Action {
 	return action.New("getnewaddress", func(args ...interface{}) (interface{}, error) {
 		var rows [][]string

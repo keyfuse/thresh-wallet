@@ -27,6 +27,7 @@ func helpAction(cli *Client) *action.Action {
 		rows = append(rows, []string{"recoverwallet", "recoverwallet", "recoverwallet"})
 		rows = append(rows, []string{"getbalance", "getbalance", "getbalance"})
 		rows = append(rows, []string{"gettxs", "gettxs", "gettxs"})
+		rows = append(rows, []string{"getaddresses", "getaddresses", "getaddresses"})
 		rows = append(rows, []string{"getnewaddress", "getnewaddress", "getnewaddress"})
 		rows = append(rows, []string{"getsendfees", "getsendfees <address> <value>", "getsendfees tb1qsdp08c4uua6ya865mmxvsqeqlv3gzp2lv5jtsw 10000"})
 		rows = append(rows, []string{"sendtoaddress", "sendtoaddress <address> <value> <fees>", "sendtoaddress tb1qsdp08c4uua6ya865mmxvsqeqlv3gzp2lv5jtsw 10000 1000"})

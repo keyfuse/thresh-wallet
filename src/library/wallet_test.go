@@ -133,6 +133,30 @@ func TestWalletTxs(t *testing.T) {
 	assert.Equal(t, 2, len(rsp.Txs))
 }
 
+func TestWalletAddresses(t *testing.T) {
+	var token string
+
+	ts, cleanup := server.MockServer()
+	defer cleanup()
+
+	// Token.
+	{
+		body := APIGetToken(ts.URL, mockMobile, "vcode")
+		rsp := &TokenResponse{}
+		unmarshal(body, rsp)
+		assert.Equal(t, 200, rsp.Code)
+		token = rsp.Token
+	}
+
+	body := APIWalletAddresses(ts.URL, token, 0, 2)
+	rsp := &WalletAddressesResponse{}
+	unmarshal(body, rsp)
+
+	t.Logf("%+v", body)
+	assert.Equal(t, 200, rsp.Code)
+	assert.Equal(t, 2, len(rsp.Addresses))
+}
+
 func TestAPIEcdsaNewAddress(t *testing.T) {
 	var token string
 

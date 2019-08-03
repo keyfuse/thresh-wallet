@@ -196,6 +196,19 @@ func (wdb *WalletDB) Txs(uid string, offset int, limit int) ([]Tx, error) {
 	return ret, nil
 }
 
+// Addresses -- used to get address list.
+func (wdb *WalletDB) Addresses(uid string, offset int, limit int) ([]AddressPos, error) {
+	store := wdb.store
+
+	// Get wallet.
+	wallet := store.Get(uid)
+	if wallet == nil {
+		return nil, fmt.Errorf("wdb.addresses.uid[%v].cant.found", uid)
+	}
+	ret := wallet.AddressPoss(offset, limit)
+	return ret, nil
+}
+
 // SendFees -- returns the fee info for this send.
 func (wdb *WalletDB) SendFees(uid string, priority string, sendAmount uint64) (*SendFees, error) {
 	store := wdb.store

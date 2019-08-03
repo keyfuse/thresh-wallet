@@ -72,6 +72,12 @@ type Unspent struct {
 	Scriptpubkey string `json:"Scriptpubkey"`
 }
 
+// AddressPos --
+type AddressPos struct {
+	Pos     uint32 `json:"pos"`
+	Address string `json:"address"`
+}
+
 // Address --
 type Address struct {
 	mu       sync.Mutex
@@ -113,14 +119,20 @@ func (w *Wallet) Unlock() {
 }
 
 // Addresses -- used to returns all the address of the wallet.
-func (w *Wallet) Addresses() []string {
-	var addrs []string
-
+func (w *Wallet) Addresses() []AddressPos {
 	w.Lock()
 	defer w.Unlock()
-	for addr := range w.Address {
-		addrs = append(addrs, addr)
+
+	var addrs []AddressPos
+	for _, addr := range w.Address {
+		addrs = append(addrs, AddressPos{
+			Address: addr.Address,
+			Pos:     addr.Pos,
+		})
 	}
+	sort.Slice(addrs, func(i, j int) bool {
+		return addrs[i].Pos > addrs[j].Pos
+	})
 	return addrs
 }
 
@@ -267,6 +279,21 @@ func (w *Wallet) Txs(offset int, limit int) []Tx {
 		return txs[offset:]
 	} else {
 		return txs[offset : offset+limit]
+	}
+}
+
+// AddressPoss -- used to return the AddressPoss from offset to offset+limit.
+func (w *Wallet) AddressPoss(offset int, limit int) []AddressPos {
+	addrs := w.Addresses()
+
+	size := len(addrs)
+	if offset >= size {
+		return nil
+	}
+	if (offset + limit) > size {
+		return addrs[offset:]
+	} else {
+		return addrs[offset : offset+limit]
 	}
 }
 

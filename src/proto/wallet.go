@@ -96,6 +96,18 @@ type WalletTxsResponse struct {
 	BlockHeight int64  `json:"block_height"`
 }
 
+// WalletAddressesRequest --
+type WalletAddressesRequest struct {
+	Offset int `json:"offset"`
+	Limit  int `json:"limit"`
+}
+
+// WalletAddressesResponse --
+type WalletAddressesResponse struct {
+	Address string `json:"address"`
+	Pos     uint32 `json:"pos"`
+}
+
 // WalletSendFeesRequest --
 type WalletSendFeesRequest struct {
 	Priority  string `json:"priority"`

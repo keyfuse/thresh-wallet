@@ -67,6 +67,7 @@ func NewAPIRouter(log *xlog.Log, conf *Config) APIMux {
 		r.Post("/api/wallet/unspent", handler.walletUnspent)
 		r.Post("/api/wallet/sendfees", handler.walletSendFees)
 		r.Post("/api/wallet/portfolio", handler.walletPortfolio)
+		r.Post("/api/wallet/addresses", handler.walletAddresses)
 
 		// ECDSA.
 		r.Post("/api/ecdsa/r2", handler.ecdsaR2)

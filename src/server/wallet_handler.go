@@ -220,8 +220,8 @@ func (h *Handler) walletTxs(w http.ResponseWriter, r *http.Request) {
 	}
 	log.Info("api.wallet.txs.req:%+v", req)
 
-	if req.Limit > 16 {
-		req.Limit = 16
+	if req.Limit > 256 {
+		req.Limit = 256
 	}
 	txs, err := wdb.Txs(uid, req.Offset, req.Limit)
 	if err != nil {
@@ -244,6 +244,50 @@ func (h *Handler) walletTxs(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 	log.Info("api.wallet.txs.rsp:%+v", rsp)
+	resp.writeJSON(rsp)
+}
+
+func (h *Handler) walletAddresses(w http.ResponseWriter, r *http.Request) {
+	log := h.log
+	wdb := h.wdb
+	resp := newResponse(log, w)
+
+	// UID.
+	uid, err := h.userinfo("walletAddresses", r)
+	if err != nil {
+		log.Error("api.wallet.addresses.uid.error:%+v", err)
+		resp.writeError(err)
+		return
+	}
+
+	// Request.
+	req := &proto.WalletAddressesRequest{}
+	err = json.NewDecoder(r.Body).Decode(req)
+	if err != nil {
+		log.Error("api.wallet[%v].addresses.decode.body.error:%+v", uid, err)
+		resp.writeError(err)
+		return
+	}
+	log.Info("api.wallet.addresses.req:%+v", req)
+
+	if req.Limit > 256 {
+		req.Limit = 256
+	}
+	addresses, err := wdb.Addresses(uid, req.Offset, req.Limit)
+	if err != nil {
+		log.Error("api.wallet[%v].addresses.error:%+v", uid, err)
+		resp.writeError(err)
+		return
+	}
+
+	var rsp []proto.WalletAddressesResponse
+	for _, address := range addresses {
+		rsp = append(rsp, proto.WalletAddressesResponse{
+			Pos:     address.Pos,
+			Address: address.Address,
+		})
+	}
+	log.Info("api.wallet.addresses.rsp:%+v", rsp)
 	resp.writeJSON(rsp)
 }
 

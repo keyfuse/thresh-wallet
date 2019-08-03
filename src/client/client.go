@@ -68,6 +68,7 @@ func (cli *Client) Start() {
 	f.AddAction(*walletRecoverAction(cli))
 	f.AddAction(*walletBalanceAction(cli))
 	f.AddAction(*walletTxsAction(cli))
+	f.AddAction(*walletAddressesAction(cli))
 	f.AddAction(*walletNewAddressAction(cli))
 	f.AddAction(*walletSendFeesAction(cli))
 	f.AddAction(*walletSendToAddressAction(cli))

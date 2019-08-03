@@ -203,6 +203,25 @@ func TestWalletTxs(t *testing.T) {
 	}
 }
 
+func TestWalletAddresses(t *testing.T) {
+	ts, cleanup := MockServer()
+	defer cleanup()
+
+	{
+		req := &proto.WalletAddressesRequest{
+			Offset: 0,
+			Limit:  3,
+		}
+		httpRsp, err := proto.NewRequest().SetHeaders("Authorization", mockToken).Post(ts.URL+"/api/wallet/addresses", req)
+		assert.Nil(t, err)
+		assert.Equal(t, 200, httpRsp.StatusCode())
+
+		resp := []proto.WalletTxsResponse{}
+		httpRsp.Json(&resp)
+		assert.Equal(t, 3, len(resp))
+	}
+}
+
 func TestWalletSendFees(t *testing.T) {
 	ts, cleanup := MockServer()
 	defer cleanup()

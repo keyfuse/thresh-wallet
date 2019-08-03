@@ -107,20 +107,20 @@ func (ws *WalletSyncer) Sync() {
 			addresses := wallet.Addresses()
 			for _, addr := range addresses {
 				// Unspents.
-				unspents, err := chain.GetUTXO(addr)
+				unspents, err := chain.GetUTXO(addr.Address)
 				if err != nil {
 					log.Error("walletsyncer.address[%v].get.utxo.error:%v", addr, err)
 					continue
 				}
-				wallet.UpdateUnspents(addr, unspents)
+				wallet.UpdateUnspents(addr.Address, unspents)
 
 				// Txs.
-				txs, err := chain.GetTxs(addr)
+				txs, err := chain.GetTxs(addr.Address)
 				if err != nil {
 					log.Error("walletsyncer.address[%v].get.txs.error:%v", addr, err)
 					continue
 				}
-				wallet.UpdateTxs(addr, txs)
+				wallet.UpdateTxs(addr.Address, txs)
 			}
 			if err := store.Write(wallet); err != nil {
 				log.Error("walletsyncer.wallet[%v].store.write.error:%v", wallet.UID, err)
