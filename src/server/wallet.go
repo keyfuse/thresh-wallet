@@ -257,20 +257,31 @@ func (w *Wallet) Unspents(sendAmount uint64) ([]UTXO, error) {
 // Txs -- used to return the txs starts from offset to offset+limit.
 func (w *Wallet) Txs(offset int, limit int) []Tx {
 	var txs []Tx
+	var confirmedtxs []Tx
+	var unconfirmedtxs []Tx
 
 	w.Lock()
-	defer w.Unlock()
 	for _, addr := range w.Address {
 		txs = append(txs, addr.Txs...)
 	}
+	w.Unlock()
+
+	for _, tx := range txs {
+		if tx.BlockHeight == 0 {
+			unconfirmedtxs = append(unconfirmedtxs, tx)
+		} else {
+			confirmedtxs = append(confirmedtxs, tx)
+		}
+	}
 
 	// Sort txs.
-	sort.Slice(txs, func(i, j int) bool {
-		if txs[i].BlockHeight == 0 || txs[j].BlockHeight == 0 {
-			return true
-		}
-		return txs[i].BlockTime > txs[j].BlockTime
+	sort.Slice(confirmedtxs, func(i, j int) bool {
+		return confirmedtxs[i].BlockTime > confirmedtxs[j].BlockTime
 	})
+	txs = txs[:0]
+	txs = append(txs, unconfirmedtxs...)
+	txs = append(txs, confirmedtxs...)
+
 	size := len(txs)
 	if offset >= size {
 		return nil
