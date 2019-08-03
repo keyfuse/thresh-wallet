@@ -88,6 +88,7 @@ type WalletTxsRequest struct {
 type WalletTxsResponse struct {
 	Txid        string `json:"txid"`
 	Fee         int64  `json:"fee"`
+	Data        string `json:"data"`
 	Link        string `json:"link"`
 	Value       int64  `json:"value"`
 	Confirmed   bool   `json:"confirmed"`

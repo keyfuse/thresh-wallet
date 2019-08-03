@@ -35,6 +35,7 @@ type SendFees struct {
 type Tx struct {
 	Txid        string `json:"txid"`
 	Fee         int64  `json:"fee"`
+	Data        string `json:"data"`
 	Link        string `json:"link"`
 	Value       int64  `json:"value"`
 	Confirmed   bool   `json:"confirmed"`
@@ -253,8 +254,8 @@ func (w *Wallet) Txs(offset int, limit int) []Tx {
 
 	// Sort txs.
 	sort.Slice(txs, func(i, j int) bool {
-		if !txs[i].Confirmed || !txs[j].Confirmed {
-			return false
+		if txs[i].BlockHeight == 0 || txs[j].BlockHeight == 0 {
+			return true
 		}
 		return txs[i].BlockTime > txs[j].BlockTime
 	})

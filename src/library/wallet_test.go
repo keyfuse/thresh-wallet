@@ -199,7 +199,7 @@ func TestAPIWalletSend(t *testing.T) {
 	}
 
 	{
-		body := APIWalletSend(ts.URL, token, "testnet", mockMasterPrvKey, "mmBRSnFG7o1BX5DaK8Da3xKxvjBh6fzNQq", 100000, 1000)
+		body := APIWalletSend(ts.URL, token, "testnet", mockMasterPrvKey, "mmBRSnFG7o1BX5DaK8Da3xKxvjBh6fzNQq", 100000, 1000, "")
 		rsp := &WalletSendResponse{}
 		unmarshal(body, rsp)
 
@@ -209,7 +209,7 @@ func TestAPIWalletSend(t *testing.T) {
 
 	// Suffient value.
 	{
-		body := APIWalletSend(ts.URL, token, "testnet", mockMasterPrvKey, "mmBRSnFG7o1BX5DaK8Da3xKxvjBh6fzNQq", 1000000, 1000)
+		body := APIWalletSend(ts.URL, token, "testnet", mockMasterPrvKey, "mmBRSnFG7o1BX5DaK8Da3xKxvjBh6fzNQq", 1000000, 1000, "")
 		rsp := &WalletSendResponse{}
 		unmarshal(body, rsp)
 

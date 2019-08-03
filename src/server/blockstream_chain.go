@@ -7,6 +7,7 @@
 package server
 
 import (
+	"encoding/hex"
 	"fmt"
 
 	"proto"
@@ -125,6 +126,7 @@ func (c *BlockstreamChain) GetUTXO(address string) ([]Unspent, error) {
 			log.Error("blockstream.utxo[%v].unmarsh.tx.error:%+v", utxo.Txid, err)
 			continue
 		}
+
 		unspent := Unspent{
 			Txid:         utxo.Txid,
 			Vout:         utxo.Vout,
@@ -158,6 +160,7 @@ func (c *BlockstreamChain) GetTxs(address string) ([]Tx, error) {
 
 	var txs []Tx
 	for _, tx := range bstxs {
+		var data string
 		var sentValue int64
 		var receivedValue int64
 
@@ -170,11 +173,20 @@ func (c *BlockstreamChain) GetTxs(address string) ([]Tx, error) {
 			if vout.ScriptpubkeyAddress == address {
 				receivedValue += vout.Value
 			}
+			if vout.ScriptpubkeyType == "op_return" {
+				hexstr := vout.Scriptpubkey
+				if len(hexstr) > 4 {
+					hexstr = hexstr[4:]
+				}
+				bytes, _ := hex.DecodeString(hexstr)
+				data = string(bytes)
+			}
 		}
 
 		tx := Tx{
 			Txid:        tx.Txid,
 			Fee:         tx.Fee,
+			Data:        data,
 			Value:       receivedValue - sentValue,
 			Confirmed:   tx.Status.Confirmed,
 			BlockTime:   tx.Status.BlockTime,

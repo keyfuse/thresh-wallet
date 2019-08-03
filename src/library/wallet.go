@@ -300,7 +300,7 @@ type WalletSendResponse struct {
 	TxID string `json:"txid"`
 }
 
-func APIWalletSend(url string, token string, chainnet string, masterPrvKey string, toAddress string, amount uint64, fees uint64) string {
+func APIWalletSend(url string, token string, chainnet string, masterPrvKey string, toAddress string, amount uint64, fees uint64, msg string) string {
 	var err error
 	var to xcore.Address
 	var change xcore.Address
@@ -316,6 +316,17 @@ func APIWalletSend(url string, token string, chainnet string, masterPrvKey strin
 	switch chainnet {
 	case MainNet:
 		net = network.MainNet
+	}
+
+	// Check msg.
+	{
+		if msg != "" {
+			if len(msg) > 64 {
+				rsp.Code = http.StatusInternalServerError
+				rsp.Message = fmt.Sprintf("message.too.long[%v].max[%v]", len(msg), 64)
+				return marshal(rsp)
+			}
+		}
 	}
 
 	// Master pravite key.
@@ -390,6 +401,9 @@ func APIWalletSend(url string, token string, chainnet string, masterPrvKey strin
 		}
 		txBuilder.To(to, amount)
 		txBuilder.SetChange(change).SendFees(fees)
+		if msg != "" {
+			txBuilder.AddPushData([]byte(msg))
+		}
 		tx, err := txBuilder.BuildTransaction()
 		if err != nil {
 			rsp.Code = http.StatusInternalServerError

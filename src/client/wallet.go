@@ -274,6 +274,7 @@ func walletTxsAction(cli *Client) *action.Action {
 			"confirmed",
 			"time",
 			"height",
+			"message",
 		}
 
 		// Check.
@@ -305,6 +306,7 @@ func walletTxsAction(cli *Client) *action.Action {
 				confirmed := tx.Confirmed
 				ts := time.Unix(tx.BlockTime, 0)
 				height := tx.BlockHeight
+				message := tx.Data
 				rows = append(rows, []string{
 					fmt.Sprintf("%v", txid),
 					fmt.Sprintf("%v", direction),
@@ -312,6 +314,7 @@ func walletTxsAction(cli *Client) *action.Action {
 					fmt.Sprintf("%v", confirmed),
 					fmt.Sprintf("%s", ts),
 					fmt.Sprintf("%v", height),
+					fmt.Sprintf("%v", message),
 				})
 			}
 			PrintQueryOutput(columns, rows)
@@ -411,6 +414,7 @@ func walletSendFeesAction(cli *Client) *action.Action {
 
 func walletSendToAddressAction(cli *Client) *action.Action {
 	return action.New("sendtoaddress", func(args ...interface{}) (interface{}, error) {
+		var msg string
 		var rows [][]string
 		columns := []string{
 			"toaddress",
@@ -425,7 +429,7 @@ func walletSendToAddressAction(cli *Client) *action.Action {
 			return nil, nil
 		}
 
-		if len(args) != 3 {
+		if len(args) < 3 {
 			pprintError("args.invalid", "sendtoaddress <address> <amount> <fees>")
 			return nil, nil
 		}
@@ -443,9 +447,13 @@ func walletSendToAddressAction(cli *Client) *action.Action {
 			return nil, nil
 		}
 
+		if len(args) == 4 {
+			msg = args[3].(string)
+		}
+
 		{
 			rsp := &library.WalletSendResponse{}
-			body := library.APIWalletSend(cli.apiurl, cli.token, cli.net, cli.masterPrvKey, address, value, fees)
+			body := library.APIWalletSend(cli.apiurl, cli.token, cli.net, cli.masterPrvKey, address, value, fees, msg)
 			if err := unmarshal(body, rsp); err != nil {
 				pprintError(err.Error(), "")
 				return nil, nil
@@ -465,6 +473,7 @@ func walletSendToAddressAction(cli *Client) *action.Action {
 
 func walletSendAllToAddressAction(cli *Client) *action.Action {
 	return action.New("sendalltoaddress", func(args ...interface{}) (interface{}, error) {
+		var msg string
 		var fees uint64
 		var balance uint64
 		var sendable uint64
@@ -483,11 +492,15 @@ func walletSendAllToAddressAction(cli *Client) *action.Action {
 			return nil, nil
 		}
 
-		if len(args) != 1 {
+		if len(args) < 1 {
 			pprintError("args.invalid", "sendalltoaddress <address>")
 			return nil, nil
 		}
 		address := args[0].(string)
+
+		if len(args) == 2 {
+			msg = args[1].(string)
+		}
 
 		// Get all balance.
 		{
@@ -523,7 +536,7 @@ func walletSendAllToAddressAction(cli *Client) *action.Action {
 
 		{
 			rsp := &library.WalletSendResponse{}
-			body := library.APIWalletSend(cli.apiurl, cli.token, cli.net, cli.masterPrvKey, address, sendable, fees)
+			body := library.APIWalletSend(cli.apiurl, cli.token, cli.net, cli.masterPrvKey, address, sendable, fees, msg)
 			if err := unmarshal(body, rsp); err != nil {
 				pprintError(err.Error(), "")
 				return nil, nil
