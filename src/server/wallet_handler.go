@@ -40,7 +40,7 @@ func (h *Handler) walletCheck(w http.ResponseWriter, r *http.Request) {
 		resp.writeError(err)
 		return
 	}
-	log.Info("api.wallet.check.req:%+v", req)
+	log.Info("api.wallet[%v].check.req:%+v", uid, req)
 
 	wallet := wdb.Wallet(uid)
 	if wallet != nil {
@@ -70,7 +70,7 @@ func (h *Handler) walletCreate(w http.ResponseWriter, r *http.Request) {
 	// UID.
 	uid, err := h.userinfo("walletCreate", r)
 	if err != nil {
-		log.Error("api.wallet.create.uid.error:%+v", err)
+		log.Error("api.wallet[%v].create.uid.error:%+v", uid, err)
 		resp.writeError(err)
 		return
 	}
@@ -100,7 +100,7 @@ func (h *Handler) walletCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// smtp backup.
-	if err := smtp.Backup(uid, "KeyFuse Server Create Backup"); err != nil {
+	if err := smtp.Backup(uid, "KeyFuse-Server-Wallet-Create"); err != nil {
 		log.Error("api.wallet[%v].create.smtp.backup.error:%+v", uid, err)
 		resp.writeErrorWithStatus(500, nil)
 		return
@@ -133,7 +133,7 @@ func (h *Handler) walletBalance(w http.ResponseWriter, r *http.Request) {
 		resp.writeError(err)
 		return
 	}
-	log.Info("api.wallet.balance.req:%+v", req)
+	log.Info("api.wallet[%v].balance.req:%+v", uid, req)
 
 	// Balance.
 	balance, err := wdb.Balance(uid)
@@ -268,7 +268,7 @@ func (h *Handler) walletAddresses(w http.ResponseWriter, r *http.Request) {
 		resp.writeError(err)
 		return
 	}
-	log.Info("api.wallet.addresses.req:%+v", req)
+	log.Info("api.wallet[%v].addresses.req:%+v", uid, req)
 
 	if req.Limit > 256 {
 		req.Limit = 256
@@ -312,7 +312,7 @@ func (h *Handler) walletSendFees(w http.ResponseWriter, r *http.Request) {
 		resp.writeError(err)
 		return
 	}
-	log.Info("api.wallet.send.fees.req:%+v", req)
+	log.Info("api.wallet[%v].send.fees.req:%+v", uid, req)
 
 	fees, err := wdb.SendFees(uid, req.Priority, req.SendValue)
 	if err != nil {
@@ -352,7 +352,7 @@ func (h *Handler) walletPortfolio(w http.ResponseWriter, r *http.Request) {
 		resp.writeError(err)
 		return
 	}
-	log.Info("api.wallet.portfolio.req:%+v", req)
+	log.Info("api.wallet[%v].portfolio.req:%+v", uid, req)
 
 	if req.Code != "" {
 		code = req.Code
@@ -394,7 +394,7 @@ func (h *Handler) walletPushTx(w http.ResponseWriter, r *http.Request) {
 		resp.writeError(err)
 		return
 	}
-	log.Info("api.wallet.push.tx.req:%+v", req)
+	log.Info("api.wallet[%v].push.tx.req:%+v", uid, req)
 
 	txid, err := wdb.chain.PushTx(req.TxHex)
 	if err != nil {

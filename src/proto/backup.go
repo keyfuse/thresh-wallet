@@ -49,3 +49,14 @@ type BackupRestoreResponse struct {
 	Time            int64  `json:"time"`
 	EncryptedPrvKey string `json:"encrypted_prvkey"`
 }
+
+// BackupVerifyRequest --
+type BackupVerifyRequest struct {
+	EncryptionPubKeyHash string `json:"encryption_pubkey_hash"`
+}
+
+// BackupVerifyResponse --
+type BackupVerifyResponse struct {
+	VerifyPassed    bool  `json:"verify_passed"`
+	VerifyTimestamp int64 `json:"verify_timestamp"`
+}

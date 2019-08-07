@@ -76,6 +76,7 @@ func NewAPIRouter(log *xlog.Log, conf *Config) APIMux {
 
 		// Backup.
 		r.Post("/api/backup/vcode", handler.backupVCode)
+		r.Post("/api/backup/verify", handler.backupVerify)
 		r.Post("/api/backup/store", handler.backupStore)
 		r.Post("/api/backup/restore", handler.backupRestore)
 	})

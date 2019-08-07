@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"time"
 
 	"proto"
 )
@@ -37,7 +38,7 @@ func (h *Handler) backupVCode(w http.ResponseWriter, r *http.Request) {
 		resp.writeError(err)
 		return
 	}
-	log.Info("api.backup.vcode.req:%+v", req)
+	log.Info("api.backup[%v].vcode.req:%+v", uid, req)
 
 	seed := make([]byte, 256)
 	if _, err := rand.Read(seed); err != nil {
@@ -77,7 +78,7 @@ func (h *Handler) backupStore(w http.ResponseWriter, r *http.Request) {
 		resp.writeError(err)
 		return
 	}
-	log.Info("api.backup.store.req:%+v", req)
+	log.Info("api.backup[%v].store.req:%+v", uid, req)
 
 	// Check.
 	backup, err := wdb.GetBackup(uid)
@@ -119,7 +120,7 @@ func (h *Handler) backupStore(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// smtp backup.
-	if err := smtp.Backup(uid, "KeyFuse Server Store Backup"); err != nil {
+	if err := smtp.Backup(uid, "KeyFuse-Server-Wallet-Backup"); err != nil {
 		log.Error("api.backup.wdb.store.backup.smtp.error:%+v", err)
 		resp.writeErrorWithStatus(500, nil)
 		return
@@ -151,7 +152,7 @@ func (h *Handler) backupRestore(w http.ResponseWriter, r *http.Request) {
 		resp.writeError(err)
 		return
 	}
-	log.Info("api.backup.restore.req:%+v", req)
+	log.Info("api.backup[%v].restore.req:%+v", uid, req)
 
 	// Check.
 	backup, err := wdb.GetBackup(uid)
@@ -190,5 +191,50 @@ func (h *Handler) backupRestore(w http.ResponseWriter, r *http.Request) {
 		EncryptedPrvKey: backup.EncryptedPrvKey,
 	}
 	log.Info("api.backup.restore.rsp:%+v", rsp)
+	resp.writeJSON(rsp)
+}
+
+func (h *Handler) backupVerify(w http.ResponseWriter, r *http.Request) {
+	log := h.log
+	wdb := h.wdb
+	resp := newResponse(log, w)
+
+	// UID.
+	uid, err := h.userinfo("backupVerify", r)
+	if err != nil {
+		log.Error("api.backup.verify.uid.error:%+v", err)
+		resp.writeError(err)
+		return
+	}
+
+	// Request.
+	req := &proto.BackupVerifyRequest{}
+	err = json.NewDecoder(r.Body).Decode(req)
+	if err != nil {
+		log.Error("api.backup.verify[%v].decode.body.error:%+v", uid, err)
+		resp.writeError(err)
+		return
+	}
+	log.Info("api.backup[%v].verify.req:%+v", uid, req)
+
+	// Check.
+	backup, err := wdb.GetBackup(uid)
+	if err != nil {
+		log.Error("api.backup.verify[%v].get.backup.error:%+v", uid, err)
+		resp.writeError(err)
+		return
+	}
+
+	var passed bool
+
+	sha256 := fmt.Sprintf("%x", sha256.Sum256([]byte(backup.EncryptionPubKey)))
+	if sha256 == req.EncryptionPubKeyHash {
+		passed = true
+	}
+	rsp := &proto.BackupVerifyResponse{
+		VerifyPassed:    passed,
+		VerifyTimestamp: time.Now().UTC().Unix(),
+	}
+	log.Info("api.backup.verify.rsp:%+v", rsp)
 	resp.writeJSON(rsp)
 }

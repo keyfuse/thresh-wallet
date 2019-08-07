@@ -1,22 +1,30 @@
 # thresh-wallet
 
-A cross-platform Bitcoin wallet powered by two-party ECDSA written in golang.
+A cross-platform keyless Bitcoin wallet service powered by Breakthrough Cryptography.
 
-[![Build Status](https://travis-ci.org/keyfuse/thresh-wallet.png)](https://travis-ci.org/keyfuse/thresh-wallet) [![Go Report Card](https://goreportcard.com/badge/github.com/keyfuse/thresh-wallet)](https://goreportcard.com/report/github.com/keyfuse/thresh-wallet) [![codecov.io](https://codecov.io/gh/keyfuse/thresh-wallet/graphs/badge.svg)](https://codecov.io/gh/keyfuse/thresh-wallet/branch/master)
+[![Build Status](https://travis-ci.org/keyfuse/thresh-wallet.png)](https://travis-ci.org/keyfuse/thresh-wallet) [![Go Report Card](https://goreportcard.com/badge/github.com/keyfuse/thresh-wallet)](https://goreportcard.com/report/github.com/keyfuse/thresh-wallet)
+
+
+## What is a keyless thresh wallet?
+
+No private keys to worry about.
+
+The wallet security is **distributed** between your device and the server.
+
+The server knows **absolutely** no information related to your private key.
 
 ## Platforms
 
+- iOS
+- OSX
 - Linux
 - Android
-- OS X
-- iOS
 
-## Building
+## How to Build
 
-To build thresh-wallet from the source code you need to have a working
-Go environment with [version 1.12 or greater installed](https://golang.org/doc/install).
+To build thresh-wallet from the source code you need to have a working Go environment with [version 1.12 or greater installed](https://golang.org/doc/install).
 
-#### Build Client/Server
+#### Building
 
 ```
 $ git clone https://github.com/keyfuse/thresh-wallet
@@ -37,13 +45,14 @@ $ make buildosx
 $ make buildandroid
 ```
 
-## Server
+## Try the Demo
 
+####  Server
 ```
 ./bin/threshwallet-server -c conf/server.json.sample  -vcode off
 ```
 
-## Client
+####  Client
 
 ```
 ./bin/threshwallet-client -uid=xx@xx.com -apiurl=http://localhost:9099
@@ -166,6 +175,9 @@ threshwallet@testnet> getbalance
 (1 rows)
 threshwallet@testnet>
 ```
+
+## Can I trust this code?
+*Don't trust. Verify.*
 
 ## License
 

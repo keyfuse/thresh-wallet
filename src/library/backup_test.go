@@ -96,4 +96,15 @@ func TestWalletBackup(t *testing.T) {
 		assert.Equal(t, 200, rsp.Code)
 		assert.Equal(t, mockMasterPrvKey, rsp.MasterPrvKey)
 	}
+
+	// Verify.
+	{
+		body := APIWalletBackupVerify(ts.URL, token, mockRSAPrvKey)
+		rsp := &WalletBackupVerifyResponse{}
+		unmarshal(body, rsp)
+
+		t.Logf("verify.rsp:%+v", body)
+		assert.Equal(t, 200, rsp.Code)
+		assert.True(t, rsp.VerifyPassed)
+	}
 }

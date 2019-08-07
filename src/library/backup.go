@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"crypto/sha256"
+
 	"proto"
 )
 
@@ -192,6 +194,58 @@ func APIWalletRestore(url string, token string, rsaPrvKey string) string {
 			return marshal(rsp)
 		}
 		rsp.MasterPrvKey = ret.PlainText
+	}
+	return marshal(rsp)
+}
+
+// WalletBackupVerifyResponse --
+type WalletBackupVerifyResponse struct {
+	Status
+	VerifyPassed    bool  `json:"verify_passed"`
+	VerifyTimestamp int64 `json:"verify_timestamp"`
+}
+
+// APIWalletBackupVerify -- used to verify the client backup is valid or not.
+func APIWalletBackupVerify(url string, token string, rsaPrvKey string) string {
+	var pubkeyHash string
+
+	rsp := &WalletBackupVerifyResponse{}
+	rsp.Code = http.StatusOK
+
+	// RSA Pubkey hash.
+	{
+		body := GetRSAPubKey(rsaPrvKey)
+		httpRsp := &RSAPubKeyResponse{}
+		err := unmarshal(body, httpRsp)
+		if err != nil {
+			rsp.Code = http.StatusInternalServerError
+			rsp.Message = err.Error()
+			return marshal(rsp)
+		}
+		pubkeyHash = fmt.Sprintf("%x", sha256.Sum256([]byte(httpRsp.PubKey)))
+	}
+
+	// Verify.
+	{
+		path := fmt.Sprintf("%s/api/backup/verify", url)
+		req := &proto.BackupVerifyRequest{
+			EncryptionPubKeyHash: pubkeyHash,
+		}
+		httpRsp, err := proto.NewRequest().SetHeaders("Authorization", token).Post(path, req)
+		if err != nil {
+			rsp.Code = http.StatusInternalServerError
+			rsp.Message = err.Error()
+			return marshal(rsp)
+		}
+
+		ret := &proto.BackupVerifyResponse{}
+		if err := httpRsp.Json(ret); err != nil {
+			rsp.Code = httpRsp.StatusCode()
+			rsp.Message = err.Error()
+			return marshal(rsp)
+		}
+		rsp.VerifyPassed = ret.VerifyPassed
+		rsp.VerifyTimestamp = ret.VerifyTimestamp
 	}
 	return marshal(rsp)
 }
