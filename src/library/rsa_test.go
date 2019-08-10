@@ -1,6 +1,6 @@
 // thresh-wallet
 //
-// Copyright 2019 by KeyFuse
+// Copyright 2019 by KeyFuse Labs
 //
 // GPLv3 License
 
@@ -17,7 +17,7 @@ import (
 func TestRSAKey(t *testing.T) {
 	var prvkey string
 	var encrypted string
-	msg := "Hello KeyFuse"
+	msg := "Hello KeyFuse Labs"
 
 	// Prv.
 	{

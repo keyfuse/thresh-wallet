@@ -1,6 +1,6 @@
 // thresh-wallet
 //
-// Copyright 2019 by KeyFuse
+// Copyright 2019 by KeyFuse Labs
 //
 // GPLv3 License
 
@@ -48,7 +48,7 @@ func (h *Handler) loginVCode(w http.ResponseWriter, r *http.Request) {
 		log.Info("api.vcode.mobile.resp:[uid:%v, vcode:%v]", req.UID, code)
 	case Email:
 		log.Info("api.vcode.email.resp:[uid:%v, vcode:%v]", req.UID, code)
-		if err := smtp.VCode(req.UID, "KeyFuse", code); err != nil {
+		if err := smtp.VCode(req.UID, "KeyFuse Labs", code); err != nil {
 			log.Error("api.vcode.email.send.error:%+v", err)
 			resp.writeError(fmt.Errorf("api.email.send.vcode.error"))
 			return

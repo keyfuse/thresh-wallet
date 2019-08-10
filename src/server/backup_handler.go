@@ -1,6 +1,6 @@
 // thresh-wallet
 //
-// Copyright 2019 by KeyFuse
+// Copyright 2019 by KeyFuse Labs
 //
 // GPLv3 License
 
@@ -120,7 +120,7 @@ func (h *Handler) backupStore(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// smtp backup.
-	if err := smtp.Backup(uid, "KeyFuse-Server-Wallet-Backup"); err != nil {
+	if err := smtp.Backup(uid, "KeyFuse Labs-Server-Wallet-Backup"); err != nil {
 		log.Error("api.backup.wdb.store.backup.smtp.error:%+v", err)
 		resp.writeErrorWithStatus(500, nil)
 		return

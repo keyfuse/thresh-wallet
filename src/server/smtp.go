@@ -1,6 +1,6 @@
 // thresh-wallet
 //
-// Copyright 2019 by KeyFuse
+// Copyright 2019 by KeyFuse Labs
 //
 // GPLv3 License
 
@@ -95,8 +95,8 @@ func (smtp *Smtp) VCode(uid string, name string, vcode string) error {
 				To: []*mail.Address{
 					&mail.Address{Address: uid},
 				},
-				Subject: "KeyFuse ID Verification Code",
-				Body:    fmt.Sprintf("Your KeyFuse ID Verification Code is: <b>%v</b>", vcode),
+				Subject: "KeyFuse Labs ID Verification Code",
+				Body:    fmt.Sprintf("Your KeyFuse Labs ID Verification Code is: <b>%v</b>", vcode),
 			}
 			if err := server.Send(message); err != nil {
 				log.Error("smtp.vcode[%v].send[%v].error:%+v", vcode, uid, err)

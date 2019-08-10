@@ -1,6 +1,6 @@
 // thresh-wallet
 //
-// Copyright 2019 by KeyFuse
+// Copyright 2019 by KeyFuse Labs
 //
 // GPLv3 License
 
@@ -100,7 +100,7 @@ func (h *Handler) walletCreate(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// smtp backup.
-	if err := smtp.Backup(uid, "KeyFuse-Server-Wallet-Create"); err != nil {
+	if err := smtp.Backup(uid, "KeyFuse Labs-Server-Wallet-Create"); err != nil {
 		log.Error("api.wallet[%v].create.smtp.backup.error:%+v", uid, err)
 		resp.writeErrorWithStatus(500, nil)
 		return

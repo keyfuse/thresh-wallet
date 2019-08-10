@@ -1,6 +1,6 @@
 // thresh-wallet
 //
-// Copyright (c) 2019 keyfuse.io
+// Copyright (c) 2019 KeyFuse Labs
 //
 // GPLv3 License
 
