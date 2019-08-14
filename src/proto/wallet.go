@@ -6,6 +6,18 @@
 
 package proto
 
+// WalletNewAddressRequest --
+type WalletNewAddressRequest struct {
+	DeviceID string `json:"deviceid"`
+	Type     string `json:"type"`
+}
+
+// WalletNewAddressResponse --
+type WalletNewAddressResponse struct {
+	Pos     uint32 `json:"pos"`
+	Address string `json:"address"`
+}
+
 // WalletCheckRequest --
 type WalletCheckRequest struct {
 }

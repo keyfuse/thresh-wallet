@@ -13,6 +13,44 @@ import (
 	"proto"
 )
 
+func (h *Handler) walletNewAddress(w http.ResponseWriter, r *http.Request) {
+	log := h.log
+	wdb := h.wdb
+	resp := newResponse(log, w)
+
+	// UID.
+	uid, err := h.userinfo("walletNewAddress", r)
+	if err != nil {
+		log.Error("api.wallet.newaddress.uid.error:%+v", err)
+		resp.writeError(err)
+		return
+	}
+
+	// Request.
+	req := &proto.WalletNewAddressRequest{}
+	err = json.NewDecoder(r.Body).Decode(req)
+	if err != nil {
+		log.Error("api.wallet.newaddress[%v].decode.body.error:%+v", uid, err)
+		resp.writeError(err)
+		return
+	}
+	log.Info("api.wallet.newaddress.req:%+v", req)
+
+	// New address.
+	address, err := wdb.NewAddress(uid, req.Type)
+	if err != nil {
+		log.Error("api.wallet.newaddress.wdb.newaddress.error:%+v", err)
+		resp.writeError(err)
+		return
+	}
+	rsp := &proto.WalletNewAddressResponse{
+		Pos:     address.Pos,
+		Address: address.Address,
+	}
+	log.Info("api.wallet.newaddress.rsp:%+v", rsp)
+	resp.writeJSON(rsp)
+}
+
 func (h *Handler) walletCheck(w http.ResponseWriter, r *http.Request) {
 	var walletExists bool
 	var backupExists bool

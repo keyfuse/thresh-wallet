@@ -8,6 +8,7 @@ package library
 
 import (
 	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"strings"
@@ -15,6 +16,7 @@ import (
 	"proto"
 
 	"github.com/tokublock/tokucore/network"
+	"github.com/tokublock/tokucore/xbase"
 	"github.com/tokublock/tokucore/xcore"
 	"github.com/tokublock/tokucore/xcore/bip32"
 	"github.com/tokublock/tokucore/xcrypto"
@@ -185,20 +187,20 @@ func APIWalletBalance(url string, token string) string {
 	return marshal(rsp)
 }
 
-// EcdsaAddressResponse --
-type EcdsaAddressResponse struct {
+// WalletNewAddressResponse --
+type WalletNewAddressResponse struct {
 	Status
 	Pos     uint32 `json:"pos"`
 	Address string `json:"address"`
 }
 
-// APIEcdsaNewAddress -- ecdsa new address api.
-func APIEcdsaNewAddress(url string, token string) string {
-	rsp := &EcdsaAddressResponse{}
+// APIWalletNewAddress -- new address api.
+func APIWalletNewAddress(url string, token string) string {
+	rsp := &WalletNewAddressResponse{}
 	rsp.Code = http.StatusOK
-	path := fmt.Sprintf("%s/api/ecdsa/newaddress", url)
+	path := fmt.Sprintf("%s/api/wallet/newaddress", url)
 
-	req := &proto.EcdsaAddressRequest{}
+	req := &proto.WalletNewAddressRequest{}
 	httpRsp, err := proto.NewRequest().SetHeaders("Authorization", token).Post(path, req)
 	if err != nil {
 		rsp.Code = http.StatusInternalServerError
@@ -206,7 +208,7 @@ func APIEcdsaNewAddress(url string, token string) string {
 		return marshal(rsp)
 	}
 
-	address := &proto.EcdsaAddressResponse{}
+	address := &proto.WalletNewAddressResponse{}
 	if err := httpRsp.Json(address); err != nil {
 		rsp.Code = httpRsp.StatusCode()
 		rsp.Message = err.Error()
@@ -337,7 +339,6 @@ func APIWalletSend(url string, token string, chainnet string, masterPrvKey strin
 	var err error
 	var to xcore.Address
 	var change xcore.Address
-	var shareR1 *secp256k1.Scalar
 	var masterkey *bip32.HDKey
 	var unspents []proto.WalletUnspentResponse
 
@@ -447,7 +448,21 @@ func APIWalletSend(url string, token string, chainnet string, masterPrvKey strin
 		for i, unspent := range unspents {
 			var sighash []byte
 			if strings.HasPrefix(unspent.Address, net.Bech32HRPSegwit) {
-				sighash = tx.WitnessSignatureHash(i, xcore.SigHashAll)
+				_, version, _, err := xbase.WitnessDecode(unspent.Address)
+				if err != nil {
+					rsp.Code = http.StatusInternalServerError
+					rsp.Message = err.Error()
+					return marshal(rsp)
+				}
+
+				switch version {
+				case 0x00:
+					sighash = tx.WitnessV0SignatureHash(i, xcore.SigHashAll)
+				default:
+					rsp.Code = http.StatusInternalServerError
+					rsp.Message = fmt.Sprintf("bench32.address[%v].version.unknow", unspent.Address)
+					return marshal(rsp)
+				}
 			} else {
 				sighash = tx.RawSignatureHash(i, xcore.SigHashAll)
 			}
@@ -465,85 +480,33 @@ func APIWalletSend(url string, token string, chainnet string, masterPrvKey strin
 				return marshal(rsp)
 			}
 
-			aliceParty := xcrypto.NewEcdsaParty(cliPrvKey.PrivateKey())
-			// Phase1.
-			sharepub := aliceParty.Phase1(svrPubKey.PublicKey())
-			// Phase2.
-			encpk1, encpub1, scalarR1 := aliceParty.Phase2(sighash)
-
-			// Get R2.
-			{
-				r2req := &proto.EcdsaR2Request{
-					Pos:  unspent.Pos,
-					Hash: sighash,
-					R1:   scalarR1,
-				}
-
-				path := fmt.Sprintf("%s/api/ecdsa/r2", url)
-				httpRsp, err := proto.NewRequest().SetHeaders("Authorization", token).Post(path, r2req)
-				if err != nil {
-					rsp.Code = http.StatusInternalServerError
-					rsp.Message = err.Error()
-					return marshal(rsp)
-				}
-				r2rsp := &proto.EcdsaR2Response{}
-				if err := httpRsp.Json(&r2rsp); err != nil {
-					rsp.Code = httpRsp.StatusCode()
-					rsp.Message = err.Error()
-					return marshal(rsp)
-				}
-
-				// Check two party Share R is same or not.
-				shareR1 = aliceParty.Phase3(r2rsp.R2)
-				if r2rsp.ShareR.X.Cmp(shareR1.X) != 0 || r2rsp.ShareR.Y.Cmp(shareR1.Y) != 0 {
-					rsp.Code = http.StatusInternalServerError
-					rsp.Message = fmt.Sprintf("shareR.not.equal")
-					return marshal(rsp)
-				}
+			// Signature.
+			scriptHex, err := hex.DecodeString(unspent.Scriptpubkey)
+			if err != nil {
+				rsp.Code = http.StatusInternalServerError
+				rsp.Message = err.Error()
+				return marshal(rsp)
 			}
 
-			// Get S2.
-			{
-				s2req := &proto.EcdsaS2Request{
-					Pos:     unspent.Pos,
-					Hash:    sighash,
-					R1:      scalarR1,
-					EncPK1:  encpk1,
-					EncPub1: encpub1,
-					ShareR:  shareR1,
-				}
-
-				path := fmt.Sprintf("%s/api/ecdsa/s2", url)
-				httpRsp, err := proto.NewRequest().SetHeaders("Authorization", token).Post(path, s2req)
-				if err != nil {
+			// Signature version.
+			script, err := xcore.ParseLockingScript(scriptHex)
+			if err != nil {
+				rsp.Code = http.StatusInternalServerError
+				rsp.Message = err.Error()
+				return marshal(rsp)
+			}
+			scriptVersion := script.GetScriptVersion()
+			switch scriptVersion {
+			case xcore.BASE, xcore.WITNESS_V0:
+				if err := signECDSA(url, token, unspent.Pos, i, sighash, tx, cliPrvKey, svrPubKey); err != nil {
 					rsp.Code = http.StatusInternalServerError
 					rsp.Message = err.Error()
 					return marshal(rsp)
 				}
-				s2rsp := &proto.EcdsaS2Response{}
-				if err := httpRsp.Json(&s2rsp); err != nil {
-					rsp.Code = httpRsp.StatusCode()
-					rsp.Message = err.Error()
-					return marshal(rsp)
-				}
-
-				// Phase5.
-				sharesig, err := aliceParty.Phase5(shareR1, s2rsp.S2)
-				if err != nil {
-					rsp.Code = http.StatusInternalServerError
-					rsp.Message = err.Error()
-					return marshal(rsp)
-				}
-
-				// Verify.
-				if err := xcrypto.EcdsaVerify(sharepub, sighash, sharesig); err != nil {
-					rsp.Code = http.StatusInternalServerError
-					rsp.Message = err.Error()
-					return marshal(rsp)
-				}
-
-				// Embed IdxSignature.
-				tx.EmbedIdxEcdsaSignature(i, sharepub, sharesig, xcore.SigHashAll)
+			default:
+				rsp.Code = http.StatusInternalServerError
+				rsp.Message = fmt.Sprintf("script.version[%v].unsupport", scriptVersion)
+				return marshal(rsp)
 			}
 		}
 
@@ -584,4 +547,76 @@ func APIWalletSend(url string, token string, chainnet string, masterPrvKey strin
 		}
 	}
 	return marshal(rsp)
+}
+
+func signECDSA(url string, token string, pos uint32, txInIdx int, sighash []byte, tx *xcore.Transaction, cliPrvKey *bip32.HDKey, svrPubKey *bip32.HDKey) error {
+	var shareR1 *secp256k1.Scalar
+
+	aliceParty := xcrypto.NewEcdsaParty(cliPrvKey.PrivateKey())
+	// Phase1.
+	sharepub := aliceParty.Phase1(svrPubKey.PublicKey())
+	// Phase2.
+	encpk1, encpub1, scalarR1 := aliceParty.Phase2(sighash)
+
+	// Get R2.
+	{
+		r2req := &proto.EcdsaR2Request{
+			Pos:  pos,
+			Hash: sighash,
+			R1:   scalarR1,
+		}
+
+		path := fmt.Sprintf("%s/api/ecdsa/r2", url)
+		httpRsp, err := proto.NewRequest().SetHeaders("Authorization", token).Post(path, r2req)
+		if err != nil {
+			return err
+		}
+		r2rsp := &proto.EcdsaR2Response{}
+		if err := httpRsp.Json(&r2rsp); err != nil {
+			return err
+		}
+
+		// Check two party Share R is same or not.
+		shareR1 = aliceParty.Phase3(r2rsp.R2)
+		if r2rsp.ShareR.X.Cmp(shareR1.X) != 0 || r2rsp.ShareR.Y.Cmp(shareR1.Y) != 0 {
+			return fmt.Errorf("shareR.not.equal")
+		}
+	}
+
+	// Get S2.
+	{
+		s2req := &proto.EcdsaS2Request{
+			Pos:     pos,
+			Hash:    sighash,
+			R1:      scalarR1,
+			EncPK1:  encpk1,
+			EncPub1: encpub1,
+			ShareR:  shareR1,
+		}
+
+		path := fmt.Sprintf("%s/api/ecdsa/s2", url)
+		httpRsp, err := proto.NewRequest().SetHeaders("Authorization", token).Post(path, s2req)
+		if err != nil {
+			return err
+		}
+		s2rsp := &proto.EcdsaS2Response{}
+		if err := httpRsp.Json(&s2rsp); err != nil {
+			return err
+		}
+
+		// Phase5.
+		sharesig, err := aliceParty.Phase5(shareR1, s2rsp.S2)
+		if err != nil {
+			return err
+		}
+
+		// Verify.
+		if err := xcrypto.EcdsaVerify(sharepub, sighash, sharesig); err != nil {
+			return err
+		}
+
+		// Embed IdxSignature.
+		tx.EmbedIdxEcdsaSignature(txInIdx, sharepub, sharesig, xcore.SigHashAll)
+	}
+	return nil
 }

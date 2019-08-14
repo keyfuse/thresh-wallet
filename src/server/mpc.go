@@ -53,7 +53,7 @@ func createSharedAddress(pos uint32, svrMasterPrvKey string, cliMasterPubkey str
 	case "P2PKH":
 		shared = xcore.NewPayToPubKeyHashAddress(sharepub.Hash160())
 	default:
-		shared = xcore.NewPayToWitnessPubKeyHashAddress(sharepub.Hash160())
+		shared = xcore.NewPayToWitnessV0PubKeyHashAddress(sharepub.Hash160())
 	}
 	return shared.ToString(net), nil
 }

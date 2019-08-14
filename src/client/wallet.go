@@ -378,8 +378,8 @@ func walletNewAddressAction(cli *Client) *action.Action {
 
 		// New address.
 		{
-			rsp := &library.EcdsaAddressResponse{}
-			body := library.APIEcdsaNewAddress(cli.apiurl, cli.token)
+			rsp := &library.WalletNewAddressResponse{}
+			body := library.APIWalletNewAddress(cli.apiurl, cli.token)
 			if err := unmarshal(body, rsp); err != nil {
 				pprintError(err.Error(), "")
 				return nil, nil

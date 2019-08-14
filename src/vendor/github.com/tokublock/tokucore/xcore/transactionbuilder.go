@@ -190,7 +190,10 @@ func (b *TransactionBuilder) BuildTransaction() (*Transaction, error) {
 				if err != nil {
 					return nil, err
 				}
-				txin := NewTxIn(txid, grpinput.n, grpinput.value, script, group.redeemScript)
+				txin, err := NewTxIn(txid, grpinput.n, grpinput.value, script, group.redeemScript)
+				if err != nil {
+					return nil, err
+				}
 				txins = append(txins, txin)
 				totalIn += int64(grpinput.value)
 
@@ -211,7 +214,7 @@ func (b *TransactionBuilder) BuildTransaction() (*Transaction, error) {
 				var script []byte
 
 				if grpoutput.addr != nil {
-					script, err = PayToAddrScript(grpoutput.addr)
+					script, err = grpoutput.addr.LockingScript()
 					if err != nil {
 						return nil, err
 					}
@@ -273,7 +276,7 @@ func (b *TransactionBuilder) BuildTransaction() (*Transaction, error) {
 			if b.change == nil {
 				return nil, xerror.NewError(Errors, ER_TRANSACTION_BUILDER_CHANGETO_EMPTY)
 			}
-			script, err := PayToAddrScript(b.change.addr)
+			script, err := b.change.addr.LockingScript()
 			if err != nil {
 				return nil, err
 			}

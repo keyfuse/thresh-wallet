@@ -11,48 +11,7 @@ import (
 	"net/http"
 
 	"proto"
-	//"xlog"
-	//"github.com/tokublock/tokucore/xcrypto"
 )
-
-// ecdsaNewAddress -- the handler of create new ECDSA address.
-func (h *Handler) ecdsaNewAddress(w http.ResponseWriter, r *http.Request) {
-	log := h.log
-	wdb := h.wdb
-	resp := newResponse(log, w)
-
-	// UID.
-	uid, err := h.userinfo("ecdsaNewAddress", r)
-	if err != nil {
-		log.Error("api.ecdsa.newaddress.uid.error:%+v", err)
-		resp.writeError(err)
-		return
-	}
-
-	// Request.
-	req := &proto.EcdsaAddressRequest{}
-	err = json.NewDecoder(r.Body).Decode(req)
-	if err != nil {
-		log.Error("api.ecdsa.newaddress[%v].decode.body.error:%+v", uid, err)
-		resp.writeError(err)
-		return
-	}
-	log.Info("api.ecdsa.newaddress.req:%+v", req)
-
-	// New address.
-	address, err := wdb.NewAddress(uid, req.Type)
-	if err != nil {
-		log.Error("api.ecdsa.newaddress.wdb.newaddress.error:%+v", err)
-		resp.writeError(err)
-		return
-	}
-	rsp := &proto.EcdsaAddressResponse{
-		Pos:     address.Pos,
-		Address: address.Address,
-	}
-	log.Info("api.ecdsa.newaddress.rsp:%+v", rsp)
-	resp.writeJSON(rsp)
-}
 
 // ecdsaR2 -- the handler of creating R2 of two party.
 func (h *Handler) ecdsaR2(w http.ResponseWriter, r *http.Request) {

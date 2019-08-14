@@ -20,6 +20,32 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestNewAddressHandler(t *testing.T) {
+	ts, cleanup := MockServer()
+	defer cleanup()
+
+	// Token.
+	{
+		req := &proto.TokenRequest{
+			UID: mockUID,
+		}
+		httpRsp, err := proto.NewRequest().Post(ts.URL+"/api/token", req)
+		assert.Nil(t, err)
+
+		resp := &proto.TokenResponse{}
+		httpRsp.Json(resp)
+		t.Log(resp)
+	}
+
+	// New address.
+	{
+		req := &proto.WalletNewAddressRequest{}
+		httpRsp, err := proto.NewRequest().SetHeaders("Authorization", mockToken).Post(ts.URL+"/api/wallet/newaddress", req)
+		assert.Nil(t, err)
+		assert.Equal(t, 200, httpRsp.StatusCode())
+	}
+}
+
 func TestWalletCheck(t *testing.T) {
 	ts, cleanup := MockServer()
 	defer cleanup()

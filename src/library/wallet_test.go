@@ -173,8 +173,8 @@ func TestAPIEcdsaNewAddress(t *testing.T) {
 	}
 
 	for i := 0; i < 3; i++ {
-		body := APIEcdsaNewAddress(ts.URL, token)
-		rsp := &EcdsaAddressResponse{}
+		body := APIWalletNewAddress(ts.URL, token)
+		rsp := &WalletNewAddressResponse{}
 		unmarshal(body, rsp)
 
 		t.Logf("%+v", body)

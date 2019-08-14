@@ -55,27 +55,27 @@ type TxIn struct {
 	Witness            [][]byte // Witness script.
 	WitnessScriptCode  []byte   // Witness  script for sighash.
 	RawLockingScript   []byte   // Previous tx output script(locking script).
-	FinalLockingScript []byte   // Previous tx output script(locking script).
-	RawUnlockingScript []byte   // Previous tx output script(locking script).
+	FinalLockingScript []byte   // The scriptPubKey for verify.
+	RawUnlockingScript []byte   // scriptSig.
 }
 
 // NewTxIn -- build a TxIn.
-func NewTxIn(txHash []byte, n uint32, value uint64, script []byte, redeemScript []byte) *TxIn {
+func NewTxIn(txHash []byte, n uint32, value uint64, script []byte, redeemScript []byte) (*TxIn, error) {
 	scriptInstance, err := ParseLockingScript(script)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	witnessScriptCode, err := scriptInstance.GetWitnessScriptCode(redeemScript)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	rawLocking, err := scriptInstance.GetRawLockingScriptBytes()
 	if err != nil {
-		return nil
+		return nil, err
 	}
 	finalLocking, err := scriptInstance.GetFinalLockingScriptBytes(redeemScript)
 	if err != nil {
-		return nil
+		return nil, err
 	}
 
 	return &TxIn{
@@ -87,7 +87,7 @@ func NewTxIn(txHash []byte, n uint32, value uint64, script []byte, redeemScript 
 		WitnessScriptCode:  witnessScriptCode,
 		RawLockingScript:   rawLocking,
 		FinalLockingScript: finalLocking,
-	}
+	}, nil
 }
 
 // HasWitness -- check the TxIn is a witness program.
@@ -315,8 +315,8 @@ func (tx *Transaction) RawSignatureHash(idx int, hashType SigHashType) []byte {
 	return xcrypto.DoubleSha256(buffer.Bytes())
 }
 
-// WitnessSignatureHash -- returns transaction hash used to get signed/verified.
-func (tx *Transaction) WitnessSignatureHash(idx int, hashType SigHashType) []byte {
+// WitnessV0SignatureHash -- returns transaction witness V0 signature hash.
+func (tx *Transaction) WitnessV0SignatureHash(idx int, hashType SigHashType) []byte {
 	var zeroHash [32]byte
 	txIn := tx.inputs[idx]
 
@@ -402,18 +402,32 @@ func (tx *Transaction) RawSignature(idx int, hashType SigHashType, prv *xcrypto.
 
 // WitnessSignature -- sign the idx input and return the witness signature.
 func (tx *Transaction) WitnessSignature(idx int, hashType SigHashType, prv *xcrypto.PrvKey) ([]byte, error) {
+	var sighash []byte
+	var signature []byte
+
 	// Sanity Check
 	inputs := len(tx.inputs)
 	if idx >= inputs {
 		return nil, xerror.NewError(Errors, ER_TRANSACTION_SIGN_OUT_INDEX, idx, inputs)
 	}
 
-	txIn := tx.inputs[idx]
-	txIn.SignatureHash = tx.WitnessSignatureHash(idx, hashType)
-	signature, err := xcrypto.EcdsaSign(prv, txIn.SignatureHash)
+	in := tx.inputs[idx]
+	script, err := ParseLockingScript(in.RawLockingScript)
 	if err != nil {
 		return nil, err
 	}
+	scriptVersion := script.GetScriptVersion()
+	switch scriptVersion {
+	case WITNESS_V0:
+		sighash = tx.WitnessV0SignatureHash(idx, hashType)
+		signature, err = xcrypto.EcdsaSign(prv, sighash)
+		if err != nil {
+			return nil, err
+		}
+	default:
+		return nil, xerror.NewError(Errors, ER_SCRIPT_SIGNATURE_TYPE_UNKNOW, scriptVersion)
+	}
+	in.SignatureHash = sighash
 	return append(signature, byte(hashType)), nil
 }
 
@@ -671,17 +685,25 @@ func (tx *Transaction) Verify() error {
 	for i, in := range tx.inputs {
 		engine := xvm.NewEngine()
 
+		script, err := ParseLockingScript(in.RawLockingScript)
+		if err != nil {
+			return err
+		}
+		scriptVersion := script.GetScriptVersion()
 		// Set engine handler.
 		{
 			// Signature hash function.
-			sigHashFn := func(hashType byte) []byte {
+			sigHashFn := func(hashType byte) ([]byte, error) {
 				var sighash []byte
-				if in.HasWitness() {
-					sighash = tx.WitnessSignatureHash(i, SigHashType(hashType))
-				} else {
+				switch scriptVersion {
+				case BASE:
 					sighash = tx.RawSignatureHash(i, SigHashType(hashType))
+				case WITNESS_V0:
+					sighash = tx.WitnessV0SignatureHash(i, SigHashType(hashType))
+				default:
+					return nil, xerror.NewError(Errors, ER_SCRIPT_SIGNATURE_TYPE_UNKNOW, scriptVersion)
 				}
-				return sighash
+				return sighash, nil
 			}
 			engine.SetSigHashFn(sigHashFn)
 
@@ -691,8 +713,12 @@ func (tx *Transaction) Verify() error {
 				if err != nil {
 					return err
 				}
-				err = xcrypto.EcdsaVerify(pub, hash, signature)
-				return err
+				switch scriptVersion {
+				case BASE, WITNESS_V0:
+					return xcrypto.EcdsaVerify(pub, hash, signature)
+				default:
+					return xerror.NewError(Errors, ER_SCRIPT_SIGNATURE_TYPE_UNKNOW, scriptVersion)
+				}
 			}
 			engine.SetSigVerifyFn(sigVerifyFn)
 		}
@@ -700,8 +726,7 @@ func (tx *Transaction) Verify() error {
 		// Verify.
 		locking := in.FinalLockingScript
 		unlocking := in.RawUnlockingScript
-		err := engine.Verify(unlocking, locking)
-		if err != nil {
+		if err := engine.Verify(unlocking, locking); err != nil {
 			return xerror.NewError(Errors, ER_TRANSACTION_VERIFY_FAILED, i, xbase.NewIDToString(in.Hash), in.Index)
 		}
 	}

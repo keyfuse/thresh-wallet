@@ -18,32 +18,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestEcdsaAddressHandler(t *testing.T) {
-	ts, cleanup := MockServer()
-	defer cleanup()
-
-	// Token.
-	{
-		req := &proto.TokenRequest{
-			UID: mockUID,
-		}
-		httpRsp, err := proto.NewRequest().Post(ts.URL+"/api/token", req)
-		assert.Nil(t, err)
-
-		resp := &proto.TokenResponse{}
-		httpRsp.Json(resp)
-		t.Log(resp)
-	}
-
-	// New address.
-	{
-		req := &proto.EcdsaAddressRequest{}
-		httpRsp, err := proto.NewRequest().SetHeaders("Authorization", mockToken).Post(ts.URL+"/api/ecdsa/newaddress", req)
-		assert.Nil(t, err)
-		assert.Equal(t, 200, httpRsp.StatusCode())
-	}
-}
-
 func TestEcdsaR2S2Handler(t *testing.T) {
 	var pos uint32
 	var shareR *secp256k1.Scalar

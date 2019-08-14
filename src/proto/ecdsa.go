@@ -13,18 +13,6 @@ import (
 	"github.com/tokublock/tokucore/xcrypto/secp256k1"
 )
 
-// EcdsaAddressRequest --
-type EcdsaAddressRequest struct {
-	DeviceID string `json:"deviceid"`
-	Type     string `json:"type"`
-}
-
-// EcdsaAddressResponse --
-type EcdsaAddressResponse struct {
-	Pos     uint32 `json:"pos"`
-	Address string `json:"address"`
-}
-
 // EcdsaR2Request --
 type EcdsaR2Request struct {
 	Pos  uint32            `json:"pos"`
