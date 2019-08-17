@@ -15,12 +15,12 @@ import (
 
 	"proto"
 
-	"github.com/tokublock/tokucore/network"
-	"github.com/tokublock/tokucore/xbase"
-	"github.com/tokublock/tokucore/xcore"
-	"github.com/tokublock/tokucore/xcore/bip32"
-	"github.com/tokublock/tokucore/xcrypto"
-	"github.com/tokublock/tokucore/xcrypto/secp256k1"
+	"github.com/keyfuse/tokucore/network"
+	"github.com/keyfuse/tokucore/xbase"
+	"github.com/keyfuse/tokucore/xcore"
+	"github.com/keyfuse/tokucore/xcore/bip32"
+	"github.com/keyfuse/tokucore/xcrypto"
+	"github.com/keyfuse/tokucore/xcrypto/secp256k1"
 )
 
 // WalletCheckResponse --

@@ -11,9 +11,9 @@ import (
 
 	"proto"
 
-	"github.com/tokublock/tokucore/xcore/bip32"
-	"github.com/tokublock/tokucore/xcrypto"
-	"github.com/tokublock/tokucore/xcrypto/secp256k1"
+	"github.com/keyfuse/tokucore/xcore/bip32"
+	"github.com/keyfuse/tokucore/xcrypto"
+	"github.com/keyfuse/tokucore/xcrypto/secp256k1"
 
 	"github.com/stretchr/testify/assert"
 )

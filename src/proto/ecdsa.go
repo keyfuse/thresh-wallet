@@ -9,8 +9,8 @@ package proto
 import (
 	"math/big"
 
-	"github.com/tokublock/tokucore/xcrypto/paillier"
-	"github.com/tokublock/tokucore/xcrypto/secp256k1"
+	"github.com/keyfuse/tokucore/xcrypto/paillier"
+	"github.com/keyfuse/tokucore/xcrypto/secp256k1"
 )
 
 // EcdsaR2Request --

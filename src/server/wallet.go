@@ -11,8 +11,8 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/tokublock/tokucore/network"
-	"github.com/tokublock/tokucore/xcore"
+	"github.com/keyfuse/tokucore/network"
+	"github.com/keyfuse/tokucore/xcore"
 )
 
 // Ticker --

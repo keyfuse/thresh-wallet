@@ -12,7 +12,7 @@ import (
 
 	"xlog"
 
-	"github.com/tokublock/tokucore/network"
+	"github.com/keyfuse/tokucore/network"
 
 	"github.com/fortytw2/leaktest"
 	"github.com/stretchr/testify/assert"

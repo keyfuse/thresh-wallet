@@ -9,8 +9,8 @@ package library
 import (
 	"net/http"
 
-	"github.com/tokublock/tokucore/network"
-	"github.com/tokublock/tokucore/xcore/bip32"
+	"github.com/keyfuse/tokucore/network"
+	"github.com/keyfuse/tokucore/xcore/bip32"
 )
 
 // MasterPrvKeyResponse --

@@ -1,7 +1,0 @@
-bin/*
-pkg/*
-src/github.com/
-
-tags
-.idea
-coverage.out
